@@ -2,6 +2,7 @@
 <addon id="plugin.video.rivedila7" name="RivediLa7" version="0.0.8" provider-name="Luivit">
   <requires>
     <import addon="xbmc.python" version="2.24.0"/>
+	<import addon="script.module.six" />
 	<import addon="script.module.beautifulsoup4" version="4.3.2"/>
 	<import addon="script.module.html5lib" version="0.999.0"/>
   </requires>
