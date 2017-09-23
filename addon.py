@@ -18,7 +18,7 @@ handle = int(sys.argv[1])
 url_rivedi="http://www.la7.it/rivedila7"
 url_tutti_programmi="http://www.la7.it/tutti-i-programmi"
 url_live="http://www.la7.it/dirette-tv"
-url_base="http://www.la7.it"
+url_base="http://www.la7.it"    
 headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36'}
 pagenum=0
 
@@ -79,16 +79,11 @@ def play_video(video,live):
         s = requests.Session()
         req = s.get(video,headers=headers)
         html = req.text
-        # URL da visitare per avere i cookie necessari su akamai
         vS = re.findall('var vS = \'(.*?)\';', html)
-        cookie_url = vS[0]
-        req = s.get(cookie_url)
-        html = req.text
-        # Prendiamo l'URL da passare al player dalla risposta
-        urls_with_video = re.findall('(http://.*?rebase=on)',html)
-        # Creiamo il cookie da passare al player
-        cookie_string = urllib.quote('hdntl=%s' % req.cookies['hdntl'])
-        link_video = '%s|Cookie:%s' % (urls_with_video[3],cookie_string)
+        try:
+            link_video = vS[0]
+        except:
+            xbmc.log('[RivediLa7] Unable to find video url')
     if not live and "tg.la7.it" in video:
         req = urllib2.Request(video,headers=headers) 
         page=urllib2.urlopen(req)
