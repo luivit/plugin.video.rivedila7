@@ -4,6 +4,9 @@ Live Streaming La7, News and Weather, Replay the last week, Programs on-demand (
 
 ### Changelog
 
+2.0.1 (2019-07-10) (by sowdust)
+- fixed diretta-live streaming url
+
 2.0.0 (2019-02-17)
 - fixed Live stream on Kodi18
 - added InputStream Adaptive in the required add-on
