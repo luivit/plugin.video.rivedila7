@@ -31,6 +31,7 @@ url_programmi = "https://www.la7.it/programmi"
 url_programmila7d = "https://www.la7.it/programmi-la7d"
 url_tutti_programmi = "https://www.la7.it/tutti-i-programmi"
 url_teche_la7 = "https://www.la7.it/i-protagonisti"
+url_la7_prime = "https://www.la7.it/la7prime"
 #DRM
 PROTOCOL = 'mpd'
 DRM = 'com.widevine.alpha'
@@ -83,12 +84,15 @@ def show_root_menu():
     liStyle = xbmcgui.ListItem('[B]'+language(32004)+'[/B]')
     liStyle.setArt({ 'thumb': os.path.join(thumb_path, 'rivedila7d.jpg'), 'fanart' : fanart_path })
     addDirectoryItem_nodup({"mode": "rivedi_la7d"},liStyle)
-    liStyle = xbmcgui.ListItem('[B]'+language(32007)+'[/B]')
-    liStyle.setArt({ 'thumb': os.path.join(thumb_path, 'tgmeteo.jpg'), 'fanart' : fanart_path })
-    addDirectoryItem_nodup({"mode": "tg_meteo"},liStyle) 
+    liStyle = xbmcgui.ListItem('[B]'+language(32010)+'[/B]')
+    liStyle.setArt({ 'thumb': os.path.join(thumb_path, 'la7prime.jpg'), 'fanart' : fanart_path })
+    addDirectoryItem_nodup({"mode": "la7_prime"},liStyle)
     liStyle = xbmcgui.ListItem('[B]'+language(32006)+'[/B]')
     liStyle.setArt({ 'thumb': os.path.join(thumb_path, 'programmila7la7d.jpg'), 'fanart' : fanart_path })
     addDirectoryItem_nodup({"mode": "tutti_programmi"},liStyle)
+    liStyle = xbmcgui.ListItem('[B]'+language(32007)+'[/B]')
+    liStyle.setArt({ 'thumb': os.path.join(thumb_path, 'tgmeteo.jpg'), 'fanart' : fanart_path })
+    addDirectoryItem_nodup({"mode": "tg_meteo"},liStyle) 
     liStyle = xbmcgui.ListItem('[B]'+language(32008)+'[/B]')
     liStyle.setArt({ 'thumb': os.path.join(thumb_path, 'techela7.jpg'), 'fanart' : fanart_path })
     addDirectoryItem_nodup({"mode": "teche_la7"},liStyle)
@@ -495,7 +499,8 @@ def video_programma():
     global link_global
     global tg_cronache
     global omnibus_news
-
+    #xbmc.log('LINK GLOBAL------: '+str(link_global),xbmc.LOGNOTICE)
+    
     if link_global == 'flag_tg_cronache':
         tg_cronache = True
         link_global = url_base+'/tgla7'
@@ -760,7 +765,7 @@ def video_programma_landpage():
         get_rows_video_landpage_preview(first_video)
 
     # PUNTATE    
-    if html.findAll(text="puntate"):
+    if (html.findAll(text="puntate")) or (html.findAll(text="Guarda ora")):
         #xbmc.log('TEST------: '+str(html.find('div',class_='home-block__content-inner')),xbmc.LOGNOTICE)
         video_puntate_1r = html.find('div',class_='home-block__content-inner').select('div[class="item"]')
         video_puntate_2r = html.find('section',class_='home-block home-block--oggi-striscia home-block--fixed').find_all('div',class_='item')
@@ -868,6 +873,13 @@ elif mode=="rivedi_la7d":
             rivedi(url_rivedila7d, 'rivedila7d.jpg')
         else:
             rivedi_giorno()
+    else:
+        play_video(play,False)
+
+elif mode=="la7_prime":
+    if play=="":
+        link_global=url_la7_prime
+        video_programma()
     else:
         play_video(play,False)
 
