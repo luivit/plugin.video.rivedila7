@@ -298,7 +298,8 @@ def programmi_lettera():
                 #xbmc.log('TITLE1-----: '+str(titolo),xbmc.LOGNOTICE)
                 liStyle = xbmcgui.ListItem(titolo)
                 url_trovato=dati.a.get('href').strip()
-                if url_trovato !='/meteola7' and url_trovato !='/tgla7':
+                #xbmc.log('URL--------: '+str(url_trovato),xbmc.LOGNOTICE)
+                if url_trovato !='/meteola7' and url_trovato !='/meteo-della-sera' and url_trovato !='/tgla7' and url_trovato !='/film' and url_trovato !='/film-e-fiction':
                     if url_trovato == '/facciaafaccia':
                         url_trovato='/faccia-a-faccia'
                     if url_trovato == '/il-boss-dei-comici':
@@ -331,7 +332,7 @@ def programmi_lettera():
                 #xbmc.log('TITLE1-----: '+str(titolo),xbmc.LOGNOTICE)
                 liStyle = xbmcgui.ListItem(titolo)
                 url_trovato=dati.a.get('href').strip()
-                if url_trovato !='/meteola7' and url_trovato !='/tgla7':
+                if url_trovato !='/meteola7' and url_trovato !='/meteo-della-sera' and url_trovato !='/tgla7' and url_trovato !='/film' and url_trovato !='/film-e-fiction':
                     if url_trovato == '/facciaafaccia':
                         url_trovato='/faccia-a-faccia'
                     if url_trovato == '/il-boss-dei-comici':
@@ -366,7 +367,7 @@ def programmi_lettera():
                 liStyle = xbmcgui.ListItem(titolo)
                 url_trovato=dati.a.get('href').strip()
                 #xbmc.log('URL TROVATO-----: '+str(url_trovato),xbmc.LOGNOTICE)
-                if url_trovato !='/meteola7' and url_trovato !='/tgla7':
+                if url_trovato !='/meteola7' and url_trovato !='/meteo-della-sera' and url_trovato !='/tgla7' and url_trovato !='/film' and url_trovato !='/film-e-fiction':
                     if url_trovato == '/facciaafaccia':
                         url_trovato='/faccia-a-faccia'
                     if url_trovato == '/il-boss-dei-comici':
@@ -401,10 +402,6 @@ def programmi_lettera():
                 'url': '/non-classificati',
                 'img': '',
                 },
-            'FILM': {
-                'url': '/film',
-                'img': '',
-                },
         }
         for programma, program_info in programmi.items():
             titolo = programma
@@ -417,6 +414,34 @@ def programmi_lettera():
 
         xbmcplugin.addSortMethod(handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_FOLDERS)
         xbmcplugin.endOfDirectory(handle=handle, succeeded=True)
+
+
+def programmi_la7prime():
+    titolo = 'LA7 Prime'
+    liStyle = xbmcgui.ListItem(titolo)
+    url_trovato = '/la7prime'
+    link = url_base + url_trovato
+    thumb = os.path.join(thumb_path, 'la7prime.jpg')
+    liStyle.setArt({ 'thumb': thumb, 'fanart' : fanart_path })
+    addDirectoryItem_nodup({"mode": mode,"link": link}, liStyle, titolo)
+
+    titolo = 'Film'
+    liStyle = xbmcgui.ListItem(titolo)
+    url_trovato = '/film'
+    link = url_base + url_trovato
+    thumb = os.path.join(thumb_path, 'film.jpg')
+    liStyle.setArt({ 'thumb': thumb, 'fanart' : fanart_path })
+    addDirectoryItem_nodup({"mode": mode,"link": link}, liStyle, titolo)
+
+    titolo = 'Film e Fiction'
+    liStyle = xbmcgui.ListItem(titolo)
+    url_trovato = '/film-e-fiction'
+    link = url_base + url_trovato
+    thumb = os.path.join(thumb_path, 'filmfiction.jpg')
+    liStyle.setArt({ 'thumb': thumb, 'fanart' : fanart_path })
+    addDirectoryItem_nodup({"mode": mode,"link": link}, liStyle, titolo)
+
+    xbmcplugin.endOfDirectory(handle=handle, succeeded=True)
 
 
 def programmi_lettera_teche_la7():
@@ -488,9 +513,17 @@ def programmi_lettera_tg_meteo():
     liStyle = xbmcgui.ListItem(titolo)
     url_trovato = '/meteola7'
     link = url_base+url_trovato
-    thumb = os.path.join(thumb_path, 'meteo.jpg')
+    thumb = os.path.join(thumb_path, 'meteola7.jpg')
     liStyle.setArt({ 'thumb': thumb, 'fanart' : fanart_path })
     addDirectoryItem_nodup({"mode": mode,"link": link}, liStyle, titolo)          
+
+    titolo = 'Meteo della Sera'
+    liStyle = xbmcgui.ListItem(titolo)
+    url_trovato = '/meteo-della-sera'
+    link = url_base+url_trovato
+    thumb = os.path.join(thumb_path, 'meteodellasera.jpg')
+    liStyle.setArt({ 'thumb': thumb, 'fanart' : fanart_path })
+    addDirectoryItem_nodup({"mode": mode,"link": link}, liStyle, titolo)  
 
     xbmcplugin.endOfDirectory(handle=handle, succeeded=True)
 
@@ -509,7 +542,7 @@ def video_programma():
         omnibus_news = True
         link_global = url_base+'/omnibus'
 
-    if (pagenum == 0) and (link_global != url_base+'/film') and (link_global != url_base+'/omnibus'):
+    if (pagenum == 0) and (link_global != url_base+'/film'):
         video_programma_landpage()
 
     if link_global != url_tgla7d:
@@ -846,17 +879,8 @@ else:
 if mode=="diretta_la7":
     play_dirette(url_live_la7,True)
 
-if mode=="diretta_la7d":  
+elif mode=="diretta_la7d":  
     play_dirette(url_live_la7d,True)
-
-elif mode=="tg_meteo":
-    if play=="":
-        if link_global=="":
-            programmi_lettera_tg_meteo()
-        else:
-            video_programma()
-    else:
-        play_video(play,False)  
 
 elif mode=="rivedi_la7":
     if play=="":
@@ -878,8 +902,10 @@ elif mode=="rivedi_la7d":
 
 elif mode=="la7_prime":
     if play=="":
-        link_global=url_la7_prime
-        video_programma()
+        if link_global=="":
+            programmi_la7prime()
+        else:
+            video_programma()
     else:
         play_video(play,False)
 
@@ -887,6 +913,15 @@ elif mode=="tutti_programmi":
     if play=="":
         if link_global=="":
             programmi_lettera()
+        else:
+            video_programma()
+    else:
+        play_video(play,False)
+
+elif mode=="tg_meteo":
+    if play=="":
+        if link_global=="":
+            programmi_lettera_tg_meteo()
         else:
             video_programma()
     else:

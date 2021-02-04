@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.rivedila7" name="LA7-LA7d" version="4.5.0" provider-name="Luivit, Testato">
+<addon id="plugin.video.rivedila7" name="LA7-LA7d" version="4.6.0" provider-name="Luivit, Testato">
   <requires>
     <import addon="xbmc.python" version="2.25.0"/>
     <import addon="script.module.requests" version="2.22.0"/>
@@ -29,8 +29,9 @@
       <screenshot>resources/screenshots/screenshot-01.jpg</screenshot>
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
-    <news>4.5.0 (2021-01-31)
-      - Added LA7 Prime
+    <news>4.6.0 (2021-02-04)
+      - Updated LA7 Prime
+      - Added Meteo della Sera
     </news>
   </extension>
 </addon>

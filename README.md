@@ -3,6 +3,10 @@ Live Streaming, Replay the last week, LA7 Prime, On-Demand programs, News & Weat
 
 
 ### Changelog
+4.6.0 (2021-02-04)
+- Updated LA7 Prime
+- Added Meteo della Sera
+
 4.5.0 (2021-01-31)
 - Added LA7 Prime
 
