@@ -832,8 +832,8 @@ def get_rows_video_landpage_preview(video):
 
 
 def get_rows_video_landpage(video):
-    #xbmc.log('VIDEO-----: '+str(video),xbmc.LOGINFO)
     for div in video:
+        #xbmc.log('VIDEO-----: '+str(video),xbmc.LOGINFO)
         titolo=div.find('div',class_='occhiello').text.encode('utf-8').strip()
         #xbmc.log('TITOLO-----: '+str(titolo),xbmc.LOGNOTICE)
         data='[I] - ('+div.find('div',class_='data').text.encode('utf-8').strip()+')[/I]'

@@ -29,7 +29,7 @@
       <screenshot>resources/screenshots/screenshot-01.jpg</screenshot>
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
-    <news>5.1.0 (2021-03-12) Kodi18 Version
+    <news>4.7.0 (2021-03-12) Kodi18 Version
       - Fix On-Demand homepages scraping
       - Removed minimal versions on import addon
     </news>
