@@ -117,7 +117,7 @@ def addDirectoryItem_nodup(parameters, li, title=titolo_global, folder=True):
 
 def play_dirette(url,live):
     if live:
-        regex5 = 'emissioneString =  "(.*?)"'
+        regex5 = 'emissioneString\s*=\s*"(.*?)"'
 
         if url == url_live_la7:
             url_title = url_base
