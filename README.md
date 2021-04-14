@@ -7,6 +7,9 @@ Live Streaming, Replay the last week, LA7 Prime, On-Demand programs, News & Weat
 "sudo apt install kodi-inputstream-adaptive"
 
 ### Changelog
+5.3.0 (2021-04-14)
+- Fixed Live channels
+
 5.2.0 (2021-03-29)
 - Fixed Title of Live channels
 
