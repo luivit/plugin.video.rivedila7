@@ -1,9 +1,10 @@
 # Everything that is to be globally accessible must be defined in this module.
-# Using the Kodi reuseLanguageInvoker feature, only the code in the addon.py module
-# will be run every time the addon is called,
+# Using the Kodi reuseLanguageInvoker feature, only the code in the addon.py module will be run every time the addon is called,
 # all other modules (imports) are initialized only on the first invocation of the add-on.
+
 from urllib.parse import parse_qsl
 
+import os
 import xbmcaddon
 
 
@@ -13,10 +14,38 @@ class GlobalVariables(object):
     # pylint: disable=attribute-defined-outside-init
     # pylint: disable=invalid-name, too-many-instance-attributes
 
+    FANART_PATH = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'fanart.jpg')
+    THUMB_PATH = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'images')
+
+    URL_BASE = "https://www.la7.it"
+    URL_BASE_LA7D = "https://www.la7.it/la7d"
+    URL_LIVE_LA7 = "https://www.la7.it/dirette-tv"
+    URL_LIVE_LA7D = "https://www.la7.it/live-la7d"
+    URL_TGLA7D = "https://tg.la7.it/listing/tgla7d"
+    URL_RIVEDILA7 = "https://www.la7.it/rivedila7/0/la7"
+    URL_RIVEDILA7D = "https://www.la7.it/rivedila7/0/la7d"
+    URL_PROGRAMMI = "https://www.la7.it/programmi"
+    URL_PROGRAMMILA7D = "https://www.la7.it/programmi-la7d"
+    URL_TUTTI_PROGRAMMI = "https://www.la7.it/tutti-i-programmi"
+    URL_TECHE_LA7 = "https://www.la7.it/i-protagonisti"
+
+    FILTRO_OMNIBUS = 'Omnibus News'
+
     # DRM config
     DRM = 'com.widevine.alpha'
     DRM_PROTOCOL = 'mpd'
     KEY_WIDEVINE = "https://la7.prod.conax.cloud/widevine/license"
+    HEADERS_SET = {
+        'host_token': 'pat.la7.it',
+        'host_license': 'la7.prod.conax.cloud',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
+        'accept': '*/*',
+        'accept-language': 'en,en-US;q=0.9,it;q=0.8',
+        'dnt': '1',
+        'te': 'trailers',
+        'origin': 'https://www.la7.it',
+        'referer': 'https://www.la7.it/',
+    }
 
     def __init__(self):
         """Do nothing on constructing the object"""
@@ -27,6 +56,7 @@ class GlobalVariables(object):
         self.ADDON = None
         self.ADDON_DATA_PATH = None
         self.DATA_PATH = None
+        self.TITOLO_GLOBAL = None
 
     def init_globals(self, argv):
         """Initialized globally used module variables. Needs to be called at start of each plugin instance!"""
@@ -37,6 +67,16 @@ class GlobalVariables(object):
         self.ADDON = xbmcaddon.Addon()
         self.LANGUAGE = self.ADDON.getLocalizedString
         self.PARAMS = parameters_string_to_dict(argv[2])
+        self.MODE_GLOBAL = str(G.PARAMS.get("mode", ""))
+        self.GIORNO_GLOBAL = str(G.PARAMS.get("giorno", ""))
+        self.LINK_GLOBAL = str(G.PARAMS.get("link", ""))
+        self.TITOLO_GLOBAL = str(G.PARAMS.get("titolo", ""))
+        self.THUMB_GLOBAL = str(G.PARAMS.get("thumb", ""))
+        self.PLOT_GLOBAL = str(G.PARAMS.get("plot", ""))
+        self.PLAY = str(G.PARAMS.get("play", ""))
+        self.PAGENUM = 0
+        self.LIST_PROGRAMMI = []
+        self.OMNIBUS_NEWS = False
 
         if self.IS_ADDON_FIRSTRUN:
             # Global variables that do NOT need to be updated at every addon run
