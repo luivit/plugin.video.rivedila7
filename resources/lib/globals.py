@@ -56,7 +56,7 @@ class GlobalVariables(object):
         self.ADDON = None
         self.ADDON_DATA_PATH = None
         self.DATA_PATH = None
-        self.TITOLO_GLOBAL = None
+        self.TITOLO = None
 
     def init_globals(self, argv):
         """Initialized globally used module variables. Needs to be called at start of each plugin instance!"""
@@ -67,12 +67,12 @@ class GlobalVariables(object):
         self.ADDON = xbmcaddon.Addon()
         self.LANGUAGE = self.ADDON.getLocalizedString
         self.PARAMS = parameters_string_to_dict(argv[2])
-        self.MODE_GLOBAL = str(G.PARAMS.get("mode", ""))
-        self.GIORNO_GLOBAL = str(G.PARAMS.get("giorno", ""))
-        self.LINK_GLOBAL = str(G.PARAMS.get("link", ""))
-        self.TITOLO_GLOBAL = str(G.PARAMS.get("titolo", ""))
-        self.THUMB_GLOBAL = str(G.PARAMS.get("thumb", ""))
-        self.PLOT_GLOBAL = str(G.PARAMS.get("plot", ""))
+        self.MODE = str(G.PARAMS.get("mode", ""))
+        self.GIORNO = str(G.PARAMS.get("giorno", ""))
+        self.LINK = str(G.PARAMS.get("link", ""))
+        self.TITOLO = str(G.PARAMS.get("titolo", ""))
+        self.THUMB = str(G.PARAMS.get("thumb", ""))
+        self.PLOT = str(G.PARAMS.get("plot", ""))
         self.PLAY = str(G.PARAMS.get("play", ""))
         self.PAGENUM = 0
         self.LIST_PROGRAMMI = []
