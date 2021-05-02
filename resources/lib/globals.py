@@ -56,7 +56,6 @@ class GlobalVariables(object):
         self.ADDON = None
         self.ADDON_DATA_PATH = None
         self.DATA_PATH = None
-        self.TITOLO = None
 
     def init_globals(self, argv):
         """Initialized globally used module variables. Needs to be called at start of each plugin instance!"""

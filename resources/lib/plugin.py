@@ -25,10 +25,10 @@ def show_root_menu():
     ''' Show the plugin root menu '''
     liStyle = xbmcgui.ListItem('[B]'+G.LANGUAGE(32002)+'[/B]', offscreen=True)
     liStyle.setArt({ 'thumb': os.path.join(G.THUMB_PATH, 'direttalivela7.jpg'), 'fanart' : G.FANART_PATH })
-    addDirectoryItem_nodup({"mode": "diretta_la7"},liStyle, folder=False)
+    addDirectoryItem_nodup({"mode": "diretta_la7"},liStyle, folder=False, is_live=True)
     liStyle = xbmcgui.ListItem('[B]'+G.LANGUAGE(32009)+'[/B]', offscreen=True)
     liStyle.setArt({ 'thumb': os.path.join(G.THUMB_PATH, 'direttalivela7d.jpg'), 'fanart' : G.FANART_PATH })
-    addDirectoryItem_nodup({"mode": "diretta_la7d"},liStyle, folder=False)   
+    addDirectoryItem_nodup({"mode": "diretta_la7d"},liStyle, folder=False, is_live=True)   
     liStyle = xbmcgui.ListItem('[B]'+G.LANGUAGE(32001)+'[/B]', offscreen=True)
     liStyle.setArt({ 'thumb': os.path.join(G.THUMB_PATH, 'rivedila7.jpg'), 'fanart' : G.FANART_PATH })
     addDirectoryItem_nodup({"mode": "rivedi_la7"},liStyle)
@@ -51,11 +51,15 @@ def show_root_menu():
     xbmcplugin.endOfDirectory(handle=G.PLUGIN_HANDLE, succeeded=True)
 
 
-def addDirectoryItem_nodup(parameters, li, title=G.TITOLO, folder=True):
+def addDirectoryItem_nodup(parameters, li, title=None, folder=True, is_live=False):
+    if not title:
+        title = G.TITOLO
     if title in G.LIST_PROGRAMMI:
         xbmc.log('PROGRAMMA DUPLICATO',xbmc.LOGINFO)      
     else:
         url = sys.argv[0] + '?' + urllib.parse.urlencode(parameters)
+        if is_live:
+            url += '&_l=.pvr'       #disabilita per le dirette la richiesta di riprendere il video dall'ultima volta
         #xbmc.log('LIST------: '+str(url),xbmc.LOGINFO)
         if not folder:
             li.setInfo('video', {})
@@ -318,7 +322,6 @@ def programmi_lettera():
                     if not titolo in G.LIST_PROGRAMMI:
                         G.LIST_PROGRAMMI.append(titolo)
 
-
         for dati in tutti_programmi:
             if dati.find('div',class_='titolo'):
                 titolo=dati.find('div',class_='titolo').text.strip()
@@ -496,7 +499,8 @@ def video_programma():
             e = sys.exc_info()[0]
             xbmc.log('EXCEP URL: '+str(e),xbmc.LOGINFO)
             if xbmcgui.Dialog().ok(G.PLUGIN_NAME, G.LANGUAGE(32005)):
-                exit()
+                xbmcplugin.endOfDirectory(G.PLUGIN_HANDLE, succeeded=False)
+                return
         html=BeautifulSoup(page,'html5lib')
 
         if G.PAGENUM == 0:
@@ -511,7 +515,8 @@ def video_programma():
             else:
                 xbmc.log('NO FIRST VIDEO',xbmc.LOGINFO)
                 if xbmcgui.Dialog().ok(G.PLUGIN_NAME, G.LANGUAGE(32005)):
-                    exit()
+                    xbmcplugin.endOfDirectory(G.PLUGIN_HANDLE, succeeded=False)
+                    return
             titolo = first.find('div',class_='title_puntata').text.strip()
             
             if G.OMNIBUS_NEWS == True:
@@ -565,8 +570,6 @@ def video_programma():
     
     
 def video_programma_teche_la7():
-    #global G.LINK
-
     #xbmc.log('LINK------: '+str(G.LINK),xbmc.LOGINFO)
     req = Request(G.LINK+"?page="+str(G.PAGENUM),headers={'user-agent': G.HEADERS_SET['user-agent']})
     page = urlopen(req)
@@ -705,7 +708,6 @@ def get_rows_video_techela7(video):
 
 
 def video_programma_landpage():
-    #global G.LINK
     #xbmc.log('LINK GLOBAL_LAND------: '+str(G.LINK),xbmc.LOGINFO)
     xbmcplugin.addDirectoryItem(handle=G.PLUGIN_HANDLE, url='', listitem=xbmcgui.ListItem("[B][COLOR blue]"+'HOME'+"[/COLOR][/B]", offscreen=True))
 
