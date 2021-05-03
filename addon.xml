@@ -30,12 +30,12 @@
       <screenshot>resources/screenshots/screenshot-01.jpg</screenshot>
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
-    <news>6.0.0 (2021-05-02)
-- Plugin Reworked version
-- Thanks to @CastagnaIT
+    <news>6.0.0 (2021-05-03)
+- Plugin reworked (thanks @CastagnaIT)
+- Temporary fix for Live  parameter suggestedPresentationDelay
     
 5.4.0 (2021-04-17)
-- Fixed decryption on L1 device
+- Temporary fix for decryption on L1 device
 
 5.3.0 (2021-04-14)
 - Fixed Live channels
