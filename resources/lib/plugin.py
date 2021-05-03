@@ -69,10 +69,10 @@ def play_dirette(url, live):
     if live:
         if url == G.URL_LIVE_LA7:
             url_title = G.URL_BASE
-            regex5 = 'emissioneString\s*=\s*"(.*?)"'
+            regex5 = r'emissioneString\s*=\s*"(.*?)"'
         elif url == G.URL_LIVE_LA7D:
             url_title = G.URL_BASE_LA7D
-            regex5 = 'emissioneStringLa7d\s*=\s*"(.*?)"'
+            regex5 = r'emissioneStringLa7d\s*=\s*"(.*?)"'
         # xbmc.log('URL TITLE-----: '+str(url_title),xbmc.LOGINFO)
 
         req = Request(url_title, headers={'user-agent': G.HEADERS_SET['user-agent']})
