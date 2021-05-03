@@ -505,9 +505,7 @@ def video_programma():
         html = BeautifulSoup(page, 'html5lib')
 
         if G.PAGENUM == 0:
-            xbmcplugin.addDirectoryItem(handle=G.PLUGIN_HANDLE, url='',
-                                        listitem=xbmcgui.ListItem("[B][COLOR blue]" + 'SETTIMANA' + "[/COLOR][/B]",
-                                                                  offscreen=True))
+            xbmcplugin.addDirectoryItem(handle=G.PLUGIN_HANDLE, url='', listitem=xbmcgui.ListItem("[B][COLOR blue]" + 'SETTIMANA' + "[/COLOR][/B]", offscreen=True))
             # FIRST VIDEO
             if html.find('div', class_='ultima_puntata'):
                 first = html.find('div', class_='ultima_puntata')
@@ -532,8 +530,7 @@ def video_programma():
 
             # WEEK VIDEO
             if html.findAll(text=" LA SETTIMANA"):
-                video_settimana = html.find('div', class_='home-block__content-carousel container-vetrina').find_all(
-                    'div', class_='item')
+                video_settimana = html.find('div', class_='home-block__content-carousel container-vetrina').find_all('div', class_='item')
                 # xbmc.log('LA SETTIMANA----: '+str(video_settimana),xbmc.LOGINFO)
                 if video_settimana:
                     get_rows_video(video_settimana)
@@ -541,9 +538,7 @@ def video_programma():
                 xbmc.log('NO WEEK VIDEO', xbmc.LOGINFO)
 
             if html.findAll(text="Puntate Cult"):
-                xbmcplugin.addDirectoryItem(handle=G.PLUGIN_HANDLE, url='',
-                                            listitem=xbmcgui.ListItem("[B][COLOR blue]" + 'ARCHIVIO' + "[/COLOR][/B]",
-                                                                      offscreen=True))
+                xbmcplugin.addDirectoryItem(handle=G.PLUGIN_HANDLE, url='', listitem=xbmcgui.ListItem("[B][COLOR blue]" + 'ARCHIVIO' + "[/COLOR][/B]", offscreen=True))
 
         # CULT VIDEO
         if html.findAll(text="Puntate Cult"):
@@ -551,8 +546,7 @@ def video_programma():
                     G.LINK == G.URL_BASE + '/lingrediente-perfetto'):
                 req2 = Request(G.LINK + "/rivedila7", headers={'user-agent': G.HEADERS_SET['user-agent']})
             else:
-                req2 = Request(G.LINK + "/rivedila7/archivio?page=" + str(G.PAGENUM),
-                               headers={'user-agent': G.HEADERS_SET['user-agent']})
+                req2 = Request(G.LINK + "/rivedila7/archivio?page=" + str(G.PAGENUM), headers={'user-agent': G.HEADERS_SET['user-agent']})
             page2 = urlopen(req2)
             html2 = BeautifulSoup(page2, 'html5lib')
             video_archivio = html2.find('div', class_='view-content clearfix').find_all('div', class_='views-row')
