@@ -38,7 +38,7 @@ class GlobalVariables(object):
     HEADERS_SET = {
         'host_token': 'pat.la7.it',
         'host_license': 'la7.prod.conax.cloud',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36',
         'accept': '*/*',
         'accept-language': 'en,en-US;q=0.9,it;q=0.8',
         'dnt': '1',
@@ -88,7 +88,7 @@ class GlobalVariables(object):
 
 
 def parameters_string_to_dict(parameters):
-    #xbmc.log('PARAMETERS------: '+str(parameters),xbmc.LOGINFO)
+    # xbmc.log('PARAMETERS------: '+str(parameters),xbmc.LOGINFO)
     param_dict = dict(parse_qsl(parameters[1:]))
     return param_dict
 
