@@ -103,7 +103,7 @@ def play_dirette(url, live):
         'referer': G.HEADERS_SET['referer'],
     }
     response = requests.get(preurl, headers=headers_tok, verify=False).json()
-    pre_auth_token = response['pre_auth_token']
+    pre_auth_token = response['preAuthToken']
 
     headers_lic = {
         'host': G.HEADERS_SET['host_license'],
