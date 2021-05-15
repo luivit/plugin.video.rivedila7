@@ -184,7 +184,7 @@ def play_video(page_video, live):
         listitem.setArt({'thumb': G.THUMB})
     listitem.setInfo('video', {'plot': G.PLOT})
     if link_video == '':
-        xbmc.log('NO VIDEO LINK', xbmc.LOGINFO)
+        xbmc.log('RivediLA7: NO VIDEO LINK', xbmc.LOGINFO)
         xbmcgui.Dialog().ok(G.PLUGIN_NAME, G.LANGUAGE(32005))
         xbmcplugin.setResolvedUrl(G.PLUGIN_HANDLE, False, listitem)
         return
