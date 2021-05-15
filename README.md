@@ -7,10 +7,13 @@ Live Streaming, Replay the last week, LA7 Prime, On-Demand programs, News & Weat
 "sudo apt install kodi-inputstream-adaptive"
 
 ### Changelog
+6.0.1 (2021-05-15)
+- inputstream.adaptive-2.6.15 adapt
+
 6.0.0 (2021-05-03)
 - Plugin reworked (thanks @CastagnaIT)
 - Temporary fix for Live  parameter suggestedPresentationDelay
-    
+
 5.4.0 (2021-04-17)
 - Temporary fix for decryption on L1 device
 

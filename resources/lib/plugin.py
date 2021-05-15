@@ -45,7 +45,7 @@ def show_root_menu():
     xbmcplugin.endOfDirectory(handle=G.PLUGIN_HANDLE, succeeded=True)
 
 
-def add_directory_item_nodup(parameters, li, title=None, folder=True, is_live=False):
+def add_directory_item_nodup(parameters, li, title='', folder=True, is_live=False):
     if not title:
         title = G.TITOLO
     if title in G.LIST_PROGRAMMI:
@@ -62,9 +62,9 @@ def add_directory_item_nodup(parameters, li, title=None, folder=True, is_live=Fa
 
 
 def play_dirette(url, live):
-    url_title = None
-    regex5 = None
-    titolo_diretta = None
+    url_title = ''
+    regex5 = ''
+    titolo_diretta = ''
 
     if live:
         if url == G.URL_LIVE_LA7:
@@ -128,14 +128,12 @@ def play_dirette(url, live):
         if live:
             # listitem.setLabel(titolo_diretta)
             listitem.setInfo('video', {'plot': titolo_diretta, 'title': titolo_diretta})
-            listitem.setProperty('inputstream.adaptive.manifest_update_parameter', 'full')  # https://github.com/xbmc/inputstream.adaptive/issues/647
-            listitem.setProperty('ResumeTime', '206')
+            listitem.setProperty('ResumeTime', '206')   # https://github.com/xbmc/inputstream.adaptive/issues/647#issuecomment-825203536
             listitem.setProperty('TotalTime', '240')
         listitem.setProperty("inputstream", is_helper.inputstream_addon)
         listitem.setProperty("inputstream.adaptive.manifest_type", G.DRM_PROTOCOL)
         listitem.setProperty("inputstream.adaptive.license_type", G.DRM)
         listitem.setProperty("inputstream.adaptive.license_key", lic_url)
-        listitem.setProperty("inputstream.adaptive.license_flags", "force_secure_decoder")  # https://github.com/xbmc/inputstream.adaptive/issues/638
         listitem.setMimeType('application/dash+xml')
         xbmcplugin.setResolvedUrl(G.PLUGIN_HANDLE, True, listitem)
     else:
@@ -279,7 +277,7 @@ def programmi_lettera():
                         except Exception as e:
                             e = sys.exc_info()[0]
                             xbmc.log('EXCEP THUMB1: ' + str(e), xbmc.LOGINFO)
-                            thumb = None
+                            thumb = ''
                         if thumb:
                             liStyle.setArt({'thumb': thumb})
                         else:
@@ -313,7 +311,7 @@ def programmi_lettera():
                         except Exception as e:
                             e = sys.exc_info()[0]
                             xbmc.log('EXCEP THUMB2: ' + str(e), xbmc.LOGINFO)
-                            thumb = None
+                            thumb = ''
                         if thumb:
                             liStyle.setArt({'thumb': thumb})
                         else:
@@ -347,7 +345,7 @@ def programmi_lettera():
                         except Exception as e:
                             e = sys.exc_info()[0]
                             xbmc.log('EXCEP THUMB3: ' + str(e), xbmc.LOGINFO)
-                            thumb = None
+                            thumb = ''
                         if thumb:
                             liStyle.setArt({'thumb': thumb})
                         else:
@@ -428,7 +426,7 @@ def programmi_lettera_teche_la7():
                     except Exception as e:
                         e = sys.exc_info()[0]
                         xbmc.log('EXCEP THUMB4: ' + str(e), xbmc.LOGINFO)
-                        thumb = None
+                        thumb = ''
                     if thumb:
                         liStyle.setArt({'thumb': thumb})
                     else:
@@ -483,7 +481,7 @@ def programmi_lettera_tg_meteo():
 
 
 def video_programma():
-    page = None
+    page = ''
     first = None
 
     # xbmc.log('LINK GLOBAL------: '+str(G.LINK),xbmc.LOGINFO)
