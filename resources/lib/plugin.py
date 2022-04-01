@@ -77,7 +77,7 @@ def play_dirette(url, live):
 
         req = Request(url_title, headers={'user-agent': G.HEADERS_SET['user-agent']})
         page = urlopen(req).read()
-        html = page.decode()
+        html = page.decode(errors='replace')
         # xbmc.log('REGEX5-----: '+str(re.findall(regex5, html)),xbmc.LOGINFO)
         titolo_diretta = re.findall(regex5, html)[0]
         # xbmc.log('TITOLO DIRETTA-----: '+str(titolo_diretta),xbmc.LOGINFO)
