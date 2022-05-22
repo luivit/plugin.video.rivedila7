@@ -197,7 +197,7 @@ def play_video(page_video, live):
 def rivedi(url, thumb):
     req = Request(url, headers={'user-agent': G.HEADERS_SET['user-agent']})
     page = urlopen(req)
-    html = BeautifulSoup(page, 'html5lib')
+    html = BeautifulSoup(page, 'html.parser')
     G.GIORNO = html.find('div', class_='block block-system').find_all('div', class_=['item item--menu-guida-tv', 'item item--menu-guida-tv active'])
     # xbmc.log('GIORNO----------: '+str(G.GIORNO),xbmc.LOGINFO)
     if G.GIORNO:
@@ -215,7 +215,7 @@ def rivedi(url, thumb):
 def rivedi_giorno():
     req = Request(G.URL_BASE + G.GIORNO, headers={'user-agent': G.HEADERS_SET['user-agent']})
     page = urlopen(req)
-    html = BeautifulSoup(page, 'html5lib')
+    html = BeautifulSoup(page, 'html.parser')
     guida_tv = html.find(id="content_guida_tv_rivedi").find_all('div', class_='item item--guida-tv')
     if guida_tv:
         for div in guida_tv:
@@ -240,16 +240,16 @@ def rivedi_giorno():
 def programmi_lettera():
     req_p = Request(G.URL_PROGRAMMI, headers={'user-agent': G.HEADERS_SET['user-agent']})
     page_p = urlopen(req_p)
-    html_p = BeautifulSoup(page_p, 'html5lib')
+    html_p = BeautifulSoup(page_p, 'html.parser')
     programmi = html_p.find(id='container-programmi-list').find_all('div', class_='list-item')
     # xbmc.log('PROGRAMMI----------: '+str(programmi),xbmc.LOGINFO)
     req_pd = Request(G.URL_PROGRAMMILA7D, headers={'user-agent': G.HEADERS_SET['user-agent']})
     page_pd = urlopen(req_pd)
-    html_pd = BeautifulSoup(page_pd, 'html5lib')
+    html_pd = BeautifulSoup(page_pd, 'html.parser')
     programmila7d = html_pd.find(id='container-programmi-list').find_all('div', class_='list-item')
     req_tp = Request(G.URL_TUTTI_PROGRAMMI, headers={'user-agent': G.HEADERS_SET['user-agent']})
     page_tp = urlopen(req_tp)
-    html_tp = BeautifulSoup(page_tp, 'html5lib')
+    html_tp = BeautifulSoup(page_tp, 'html.parser')
     tutti_programmi = html_tp.find_all('div', class_='list-item')
 
     if programmi or programmila7d or tutti_programmi:
@@ -408,7 +408,7 @@ def programmi_la7prime():
 def programmi_lettera_teche_la7():
     req_teche = Request(G.URL_TECHE_LA7, headers={'user-agent': G.HEADERS_SET['user-agent']})
     page_teche = urlopen(req_teche)
-    html_teche = BeautifulSoup(page_teche, 'html5lib')
+    html_teche = BeautifulSoup(page_teche, 'html.parser')
     teche_la7 = html_teche.find_all('div', class_='list-item')
 
     if teche_la7:
@@ -502,7 +502,7 @@ def video_programma():
             if xbmcgui.Dialog().ok(G.PLUGIN_NAME, G.LANGUAGE(32005)):
                 xbmcplugin.endOfDirectory(G.PLUGIN_HANDLE, succeeded=False)
                 return
-        html = BeautifulSoup(page, 'html5lib')
+        html = BeautifulSoup(page, 'html.parser')
 
         if G.PAGENUM == 0:
             xbmcplugin.addDirectoryItem(handle=G.PLUGIN_HANDLE, url='', listitem=xbmcgui.ListItem("[B][COLOR blue]" + 'SETTIMANA' + "[/COLOR][/B]", offscreen=True))
@@ -548,7 +548,7 @@ def video_programma():
             else:
                 req2 = Request(G.LINK + "/rivedila7/archivio?page=" + str(G.PAGENUM), headers={'user-agent': G.HEADERS_SET['user-agent']})
             page2 = urlopen(req2)
-            html2 = BeautifulSoup(page2, 'html5lib')
+            html2 = BeautifulSoup(page2, 'html.parser')
             video_archivio = html2.find('div', class_='view-content clearfix').find_all('div', class_='views-row')
             if video_archivio:
                 get_rows_video(video_archivio)
@@ -560,7 +560,7 @@ def video_programma():
     else:
         req = Request(G.LINK + "?page=" + str(G.PAGENUM), headers={'user-agent': G.HEADERS_SET['user-agent']})
         page = urlopen(req)
-        html = BeautifulSoup(page, 'html5lib')
+        html = BeautifulSoup(page, 'html.parser')
         video_tgla7d = html.find('div', class_='tgla7-category').find_all('article', class_='tgla7-new clearfix')
         if video_tgla7d:
             get_rows_video_tgla7d(video_tgla7d)
@@ -575,7 +575,7 @@ def video_programma_teche_la7():
     # xbmc.log('LINK------: '+str(G.LINK),xbmc.LOGINFO)
     req = Request(G.LINK + "?page=" + str(G.PAGENUM), headers={'user-agent': G.HEADERS_SET['user-agent']})
     page = urlopen(req)
-    html = BeautifulSoup(page, 'html5lib')
+    html = BeautifulSoup(page, 'html.parser')
 
     if G.PAGENUM == 0:
         # PREVIEW VIDEO
@@ -728,7 +728,7 @@ def video_programma_landpage():
     else:
         req = Request(G.LINK, headers={'user-agent': G.HEADERS_SET['user-agent']})
     page = urlopen(req)
-    html = BeautifulSoup(page, 'html5lib')
+    html = BeautifulSoup(page, 'html.parser')
 
     # VIDEO INIZIALE
     video_iniziale = html.find('div', class_='ultima_puntata')

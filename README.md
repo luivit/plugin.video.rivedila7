@@ -7,6 +7,10 @@ Live Streaming, Replay the last week, LA7 Prime, On-Demand programs, News & Weat
 "sudo apt install kodi-inputstream-adaptive"
 
 ### Changelog
+6.0.2 (2022-05-22)
+- Removed html5lib dependence
+- Fix for UnicodeDecodeError (thanks @marcocalm)
+
 6.0.1 (2021-05-15)
 - inputstream.adaptive-2.6.15 adapt
 
