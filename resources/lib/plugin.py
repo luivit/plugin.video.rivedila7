@@ -144,7 +144,7 @@ def play_video(page_video, live):
     # xbmc.log('PAGE VIDEO-----: '+str(page_video),xbmc.LOGINFO)
 
     # regex1 = 'vS = "(.*?)"'
-    regex2 = '/content/(.*?).mp4'
+    regex2 = ',/content/(.*?).mp4'
     regex3 = 'm3u8: "(.*?)"'
     # regex4 = '  <iframe src="(.*?)"'
 
