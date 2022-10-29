@@ -7,6 +7,10 @@ Live Streaming, Replay the last week, LA7 Prime, On-Demand programs, News & Weat
 "sudo apt install kodi-inputstream-adaptive"
 
 ### Changelog
+6.1.0 (2022-10-29)
+- Improved Regex that repair many Programs view
+- Added "Una giornata particolare" to Programs
+
 6.0.2 (2022-05-22)
 - Removed html5lib dependence
 - Fix for UnicodeDecodeError (thanks @marcocalm)
