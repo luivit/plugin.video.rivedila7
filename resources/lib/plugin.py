@@ -773,7 +773,7 @@ def get_rows_video_landpage_preview(video):
     else:
         thumb = thumblink
     if video.find('div', class_='occhiello'):
-        plot = video.find('div', class_='title_puntata').text.strip()
+        plot = video.find('div', class_='occhiello').text.strip()
     else:
         if video.find('div', class_='title_puntata'):
             plot = video.find('div', class_='title_puntata').text.strip()
