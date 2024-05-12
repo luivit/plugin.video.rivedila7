@@ -767,11 +767,22 @@ def get_rows_video_landpage_preview(video):
     titolo = video.find('div', class_='title_puntata').text.strip()
     data = '[I] - (' + video.find('div', class_='scritta_ultima').text.strip() + ')[/I]'
     thumblink = video.find('div', class_='holder-bg lozad').get('data-background-image')
+    plot = ""
     if thumblink.startswith('//'):
         thumb = 'https:' + thumblink
     else:
         thumb = thumblink
-    plot = video.find('div', class_='occhiello').text.strip()
+    try:
+        plot = first.find('div', class_='occhiello').text.strip()
+    except Exception as e:
+        e = sys.exc_info()[0]
+        xbmc.log('EXCEP PLOT2: ' + str(e), xbmc.LOGINFO)
+        try:
+            plot = video.find('div', class_='title_puntata').text.strip()
+        except Exception as ee:
+            ee = sys.exc_info()[0]
+            xbmc.log('EXCEP TITLE_PUNTATA: ' + str(ee), xbmc.LOGINFO)
+            plot = ""
     link = G.URL_BASE + video.find('a').get('href')
     liStyle = xbmcgui.ListItem(titolo + data, offscreen=True)
     liStyle.setArt({'thumb': thumb, 'fanart': G.FANART_PATH})
