@@ -7,6 +7,9 @@ Live Streaming, Replay the last week, LA7 Prime, On-Demand programs, News & Weat
 "sudo apt install kodi-inputstream-adaptive"
 
 ### Changelog
+6.2.1 (2024-05-09)
+- Solved program cataloging (thanks @fabpolli)
+
 6.2.0 (2022-03-5)
 - Solved 4h Live delay problem
 
