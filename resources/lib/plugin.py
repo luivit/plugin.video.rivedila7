@@ -261,104 +261,107 @@ def programmi_lettera():
 
     if programmi or programmila7d or tutti_programmi:
         for dati in programmi:
-            if dati.find('div', class_='titolo'):
-                titolo = dati.find('div', class_='titolo').text.strip()
+            if dati.find('a') is None:
+                continue
+            url_trovato = dati.a.get('href').strip()
+            # xbmc.log('URL--------: '+str(url_trovato),xbmc.LOGINFO)
+            if url_trovato != '/meteola7' and url_trovato != '/meteo-della-sera' and url_trovato != '/tgla7' and url_trovato != '/film' and url_trovato != '/film-e-fiction':
+                if url_trovato == '/facciaafaccia':
+                    url_trovato = '/faccia-a-faccia'
+                if url_trovato == '/il-boss-dei-comici':
+                    url_trovato = '/boss-dei-comici'
+                if url_trovato == '/lariadestate':
+                    url_trovato = '/laria-destate'
+                if url_trovato == '/taga-doc':
+                    url_trovato = '/tagada-doc'
+                titolo = url_trovato.lstrip('/').replace('-', ' ').upper()
                 # xbmc.log('TITLE1-----: '+str(titolo),xbmc.LOGINFO)
                 liStyle = xbmcgui.ListItem(titolo, offscreen=True)
-                url_trovato = dati.a.get('href').strip()
-                # xbmc.log('URL--------: '+str(url_trovato),xbmc.LOGINFO)
-                if url_trovato != '/meteola7' and url_trovato != '/meteo-della-sera' and url_trovato != '/tgla7' and url_trovato != '/film' and url_trovato != '/film-e-fiction':
-                    if url_trovato == '/facciaafaccia':
-                        url_trovato = '/faccia-a-faccia'
-                    if url_trovato == '/il-boss-dei-comici':
-                        url_trovato = '/boss-dei-comici'
-                    if url_trovato == '/lariadestate':
-                        url_trovato = '/laria-destate'
-                    if url_trovato == '/taga-doc':
-                        url_trovato = '/tagada-doc'
-                    link = G.URL_BASE + url_trovato
-                    # xbmc.log('LINK-----: '+str(link),xbmc.LOGINFO)
-                    if len(dati) > 0:
-                        try:
-                            thumb = dati.find('div', class_='image-bg lozad').get('data-background-image')
-                        except Exception as e:
-                            e = sys.exc_info()[0]
-                            xbmc.log('EXCEP THUMB1: ' + str(e), xbmc.LOGINFO)
-                            thumb = ''
-                        if thumb:
-                            liStyle.setArt({'thumb': thumb})
-                        else:
-                            xbmc.log('NO THUMB1', xbmc.LOGINFO)
-                    liStyle.setArt({'fanart': G.FANART_PATH})
-                    add_directory_item_nodup({"mode": G.MODE, "link": link}, liStyle, titolo)
+                link = G.URL_BASE + url_trovato
+                # xbmc.log('LINK-----: '+str(link),xbmc.LOGINFO)
+                if len(dati) > 0:
+                    try:
+                        thumb = dati.find('div', class_='image-bg lozad').get('data-background-image')
+                    except Exception as e:
+                        e = sys.exc_info()[0]
+                        xbmc.log('EXCEP THUMB1: ' + str(e), xbmc.LOGINFO)
+                        thumb = ''
+                    if thumb:
+                        liStyle.setArt({'thumb': thumb})
+                    else:
+                        xbmc.log('NO THUMB1', xbmc.LOGINFO)
+                liStyle.setArt({'fanart': G.FANART_PATH})
+                add_directory_item_nodup({"mode": G.MODE, "link": link}, liStyle, titolo)
 
-                    if titolo not in G.LIST_PROGRAMMI:
-                        G.LIST_PROGRAMMI.append(titolo)
+                if titolo not in G.LIST_PROGRAMMI:
+                    G.LIST_PROGRAMMI.append(titolo)
 
         for dati in programmila7d:
-            if dati.find('div', class_='titolo'):
-                titolo = dati.find('div', class_='titolo').text.strip()
+            if dati.find('a') is None:
+                continue
+            url_trovato = dati.a.get('href').strip()
+            if url_trovato != '/meteola7' and url_trovato != '/meteo-della-sera' and url_trovato != '/tgla7' and url_trovato != '/film' and url_trovato != '/film-e-fiction':
+                if url_trovato == '/facciaafaccia':
+                    url_trovato = '/faccia-a-faccia'
+                if url_trovato == '/il-boss-dei-comici':
+                    url_trovato = '/boss-dei-comici'
+                if url_trovato == '/lariadestate':
+                    url_trovato = '/laria-destate'
+                if url_trovato == '/taga-doc':
+                    url_trovato = '/tagada-doc'
+                titolo = url_trovato.lstrip('/').replace('-', ' ').upper()
                 # xbmc.log('TITLE1-----: '+str(titolo),xbmc.LOGINFO)
                 liStyle = xbmcgui.ListItem(titolo, offscreen=True)
-                url_trovato = dati.a.get('href').strip()
-                if url_trovato != '/meteola7' and url_trovato != '/meteo-della-sera' and url_trovato != '/tgla7' and url_trovato != '/film' and url_trovato != '/film-e-fiction':
-                    if url_trovato == '/facciaafaccia':
-                        url_trovato = '/faccia-a-faccia'
-                    if url_trovato == '/il-boss-dei-comici':
-                        url_trovato = '/boss-dei-comici'
-                    if url_trovato == '/lariadestate':
-                        url_trovato = '/laria-destate'
-                    if url_trovato == '/taga-doc':
-                        url_trovato = '/tagada-doc'
-                    link = G.URL_BASE + url_trovato
-                    # xbmc.log('LINK-----: '+str(link),xbmc.LOGINFO)
-                    if len(dati) > 0:
-                        try:
-                            thumb = dati.find('div', class_='image-bg lozad').get('data-background-image')
-                        except Exception as e:
-                            e = sys.exc_info()[0]
-                            xbmc.log('EXCEP THUMB2: ' + str(e), xbmc.LOGINFO)
-                            thumb = ''
-                        if thumb:
-                            liStyle.setArt({'thumb': thumb})
-                        else:
-                            xbmc.log('NO THUMB2', xbmc.LOGINFO)
-                    liStyle.setArt({'fanart': G.FANART_PATH})
-                    add_directory_item_nodup({"mode": G.MODE, "link": link}, liStyle, titolo)
-                    if titolo not in G.LIST_PROGRAMMI:
-                        G.LIST_PROGRAMMI.append(titolo)
+                link = G.URL_BASE + url_trovato
+                # xbmc.log('LINK-----: '+str(link),xbmc.LOGINFO)
+                if len(dati) > 0:
+                    try:
+                        thumb = dati.find('div', class_='image-bg lozad').get('data-background-image')
+                    except Exception as e:
+                        e = sys.exc_info()[0]
+                        xbmc.log('EXCEP THUMB2: ' + str(e), xbmc.LOGINFO)
+                        thumb = ''
+                    if thumb:
+                        liStyle.setArt({'thumb': thumb})
+                    else:
+                        xbmc.log('NO THUMB2', xbmc.LOGINFO)
+                liStyle.setArt({'fanart': G.FANART_PATH})
+                add_directory_item_nodup({"mode": G.MODE, "link": link}, liStyle, titolo)
+                if titolo not in G.LIST_PROGRAMMI:
+                    G.LIST_PROGRAMMI.append(titolo)
 
         for dati in tutti_programmi:
-            if dati.find('div', class_='titolo'):
-                titolo = dati.find('div', class_='titolo').text.strip()
+            if dati.find('a') is None:
+                continue
+            url_trovato = dati.a.get('href').strip()
+            # xbmc.log('URL TROVATO-----: '+str(url_trovato),xbmc.LOGINFO)
+            if url_trovato != '/meteola7' and url_trovato != '/meteo-della-sera' and url_trovato != '/tgla7' and url_trovato != '/film' and url_trovato != '/film-e-fiction':
+                if url_trovato == '/facciaafaccia':
+                    url_trovato = '/faccia-a-faccia'
+                if url_trovato == '/il-boss-dei-comici':
+                    url_trovato = '/boss-dei-comici'
+                if url_trovato == '/lariadestate':
+                    url_trovato = '/laria-destate'
+                if url_trovato == '/taga-doc':
+                    url_trovato = '/tagada-doc'
+                titolo = url_trovato.lstrip('/').replace('-', ' ').upper()
                 # xbmc.log('TITLE2: '+str(titolo),xbmc.LOGINFO)
                 liStyle = xbmcgui.ListItem(titolo, offscreen=True)
-                url_trovato = dati.a.get('href').strip()
-                # xbmc.log('URL TROVATO-----: '+str(url_trovato),xbmc.LOGINFO)
-                if url_trovato != '/meteola7' and url_trovato != '/meteo-della-sera' and url_trovato != '/tgla7' and url_trovato != '/film' and url_trovato != '/film-e-fiction':
-                    if url_trovato == '/facciaafaccia':
-                        url_trovato = '/faccia-a-faccia'
-                    if url_trovato == '/il-boss-dei-comici':
-                        url_trovato = '/boss-dei-comici'
-                    if url_trovato == '/lariadestate':
-                        url_trovato = '/laria-destate'
-                    if url_trovato == '/taga-doc':
-                        url_trovato = '/tagada-doc'
-                    link = G.URL_BASE + url_trovato
-                    # xbmc.log('LINK-----: '+str(link),xbmc.LOGINFO)
-                    if len(dati) > 0:
-                        try:
-                            thumb = dati.find('div', class_='image-bg lozad').get('data-background-image')
-                        except Exception as e:
-                            e = sys.exc_info()[0]
-                            xbmc.log('EXCEP THUMB3: ' + str(e), xbmc.LOGINFO)
-                            thumb = ''
-                        if thumb:
-                            liStyle.setArt({'thumb': thumb})
-                        else:
-                            xbmc.log('NO THUMB3', xbmc.LOGINFO)
-                    liStyle.setArt({'fanart': G.FANART_PATH})
-                    add_directory_item_nodup({"mode": G.MODE, "link": link}, liStyle, titolo)
+                link = G.URL_BASE + url_trovato
+                # xbmc.log('LINK-----: '+str(link),xbmc.LOGINFO)
+                if len(dati) > 0:
+                    try:
+                        thumb = dati.find('div', class_='image-bg lozad').get('data-background-image')
+                    except Exception as e:
+                        e = sys.exc_info()[0]
+                        xbmc.log('EXCEP THUMB3: ' + str(e), xbmc.LOGINFO)
+                        thumb = ''
+                    if thumb:
+                        liStyle.setArt({'thumb': thumb})
+                    else:
+                        xbmc.log('NO THUMB3', xbmc.LOGINFO)
+                liStyle.setArt({'fanart': G.FANART_PATH})
+                add_directory_item_nodup({"mode": G.MODE, "link": link}, liStyle, titolo)
 
         # Prog aggiunti manualmente
         programmi = {
@@ -420,6 +423,8 @@ def programmi_lettera_teche_la7():
 
     if teche_la7:
         for dati in teche_la7:
+            if dati.find('a') is None:
+                continue
             if dati.find('div', class_='titolo'):
                 nomicognomi = dati.find('div', class_='titolo').text.strip()
                 cognominomi = " ".join(reversed(nomicognomi.split(" ")))
