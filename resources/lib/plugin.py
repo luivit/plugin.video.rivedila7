@@ -251,7 +251,11 @@ def process_program_data(dati, config):
     # xbmc.log('URL--------: '+str(url_trovato),xbmc.LOGINFO)
     if url_trovato not in config['exclusions']:
         url_trovato = config['mappings'].get(url_trovato, url_trovato)
-        titolo = url_trovato.lstrip('/').replace('-', ' ').upper()
+        titolo = ''
+        if dati.find('div', class_='titolo'):
+            titolo = dati.find('div', class_='titolo').text.strip()
+        if titolo == '':
+            titolo = url_trovato.lstrip('/').replace('-', ' ').upper()
         # xbmc.log('TITLE1-----: '+str(titolo),xbmc.LOGINFO)
         liStyle = xbmcgui.ListItem(titolo, offscreen=True)
         link = G.URL_BASE + url_trovato
