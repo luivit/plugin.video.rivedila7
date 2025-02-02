@@ -773,7 +773,8 @@ def get_rows_video_landpage_preview(video):
     else:
         thumb = thumblink
     try:
-        plot = first.find('div', class_='occhiello').text.strip()
+        occhiello = video.find('div', class_='occhiello')
+        plot = occhiello.text.strip() if occhiello else ""
     except Exception as e:
         e = sys.exc_info()[0]
         xbmc.log('EXCEP PLOT2: ' + str(e), xbmc.LOGINFO)
