@@ -29,7 +29,11 @@
       <screenshot>resources/screenshots/screenshot-01.jpg</screenshot>
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
-    <news>6.2.1 (2024-05-09)
+    <news>6.3.0 (2025-05-11)
+- fix Programs title and added Config for manual added programs (thanks @24mu13)
+- patch text not found (thanks @lpuglia)
+      
+6.2.1 (2024-05-09)
 - Solved program cataloging (thanks @fabpolli)
       
 6.2.0 (2022-03-5)
