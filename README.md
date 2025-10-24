@@ -1,4 +1,4 @@
-# LA7-LA7d Kodi plugin
+# LA7-LA7Cinema Kodi plugin
 Live Streaming, Replay the last week, LA7 Prime, On-Demand programs, News & Weather, Teche LA7-The Protagonists (italian language)
 
 ### Install tips
