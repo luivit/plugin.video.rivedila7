@@ -7,6 +7,15 @@ Live Streaming, Replay the last week, LA7 Prime, On-Demand programs, News & Weat
 "sudo apt install kodi-inputstream-adaptive"
 
 ### Changelog
+7.0.0 (2025-10-23)
+- LA7d channel replaced with the new LA7 Cinema
+- New channel LA7 Eventi
+- Review function of the new LA7 Cinema channel
+- Added Tutti i Film page in the La7 Prime section
+- TG La7d replaced with TG Digital in the News and Weather section
+- Omnibus News replaced with Edicola in the News and Weather section
+- Protagonist section replaced with Personalities section
+
 6.3.0 (2025-05-11)
 - fix Programs title and added Config for manual added programs (thanks @24mu13)
 - patch text not found (thanks @lpuglia)

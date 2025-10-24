@@ -21,16 +21,16 @@ msgid "LA7 Replay"
 msgstr "Rivedi LA7"
 
 msgctxt "#32004"
-msgid "LA7d Replay"
-msgstr "Rivedi LA7d"
+msgid "LA7 Cinema Replay"
+msgstr "Rivedi LA7 Cinema"
 
 msgctxt "#32002"
 msgid "LA7 Live"
 msgstr "Diretta LA7"
 
 msgctxt "#32009"
-msgid "LA7d Live"
-msgstr "Diretta LA7d"
+msgid "LA7 Cinema Live"
+msgstr "Diretta LA7 Cinema"
 
 msgctxt "#32003"
 msgid "Next Page"
@@ -49,9 +49,13 @@ msgid "Programs"
 msgstr "Programmi"
 
 msgctxt "#32008"
-msgid "Protagonists"
-msgstr "Protagonisti"
+msgid "Personalities"
+msgstr "Personaggi"
 
 msgctxt "#32010"
 msgid "LA7 Prime"
 msgstr "LA7 Prime"
+
+msgctxt "#32011"
+msgid "LA7 Eventi Live"
+msgstr "Diretta LA7 Eventi"
