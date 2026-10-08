@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.rivedila7" name="LA7-LA7Cinema" version="7.0.0" provider-name="Luivit, Testato">
+<addon id="plugin.video.rivedila7" name="LA7-LA7Cinema" version="7.1.0" provider-name="Luivit, Testato">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="script.module.requests" version="0.0.0"/>
@@ -29,7 +29,12 @@
       <screenshot>resources/screenshots/screenshot-01.jpg</screenshot>
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
-    <news>7.0.0 (2025-10-23)
+    <news>7.1.0 (2026-10-08)
+- Added Search function
+- Fix Personalities biography
+- LA7 Meteo replaced with Omnibus Meteo in the News and Weather section
+
+7.0.0 (2025-10-23)
 - LA7d channel replaced with the new LA7 Cinema
 - New channel LA7 Eventi
 - Review function of the new LA7 Cinema channel
@@ -44,14 +49,6 @@
 
 6.2.1 (2024-05-09)
 - Solved program cataloging (thanks @fabpolli)
-
-6.2.0 (2022-03-5)
-- Solved 4h Live delay problem
-
-6.1.0 (2022-10-29)
-- Improved Regex that repair many Programs view
-- Added "Una giornata particolare" to Programs
-- Filter Omnibus News vs Omnibus
     </news>
   </extension>
 </addon>

@@ -14,11 +14,11 @@ class GlobalVariables(object):
     # pylint: disable=attribute-defined-outside-init
     # pylint: disable=invalid-name, too-many-instance-attributes
 
+    PLUGIN_URL = "plugin://plugin.video.rivedila7/"
     FANART_PATH = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'fanart.jpg')
     THUMB_PATH = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'images')
-
+    
     URL_BASE = "https://www.la7.it"
-    #URL_BASE_LA7CINEMA = "https://www.la7.it/la7cinema"
     URL_LIVE_LA7 = "https://www.la7.it/dirette-tv"
     URL_LIVE_LA7CINEMA = "https://www.la7.it/live-la7cinema"
     URL_LIVE_LA7EVENTI = "https://www.la7.it/live-eventi-la7"
@@ -29,8 +29,9 @@ class GlobalVariables(object):
     URL_RIVEDILA7CINEMA = "https://www.la7.it/rivedila7/0/la7cinema"
     URL_PROGRAMMI = "https://www.la7.it/programmi"
     URL_TUTTI_PROGRAMMI = "https://www.la7.it/tutti-i-programmi"
-    #URL_TECHE_LA7 = "https://www.la7.it/i-protagonisti"
     URL_TECHE_LA7 = "https://www.la7.it/tutti-i-personaggi"
+    URL_CERCA_LA7 = "https://www.la7.it/ricerca?query="
+
 
 
     # DRM config

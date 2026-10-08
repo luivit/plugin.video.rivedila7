@@ -59,3 +59,7 @@ msgstr ""
 msgctxt "#32011"
 msgid "LA7 Eventi Live"
 msgstr ""
+
+msgctxt "#32012"
+msgid "Search on LA7"
+msgstr ""

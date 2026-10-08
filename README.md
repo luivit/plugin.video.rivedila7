@@ -1,12 +1,17 @@
 # LA7-LA7Cinema Kodi plugin
-Live Streaming, Replay the last week, LA7 Prime, On-Demand programs, News & Weather, Teche LA7-The Protagonists (italian language)
+Live Streaming, Replay the last week, LA7 Cinema, On-Demand programs, News & Weather, Search function (italian language)
 
 ### Install tips
-- You can install this plugin via the official Kodi19 repository
+- You can install this plugin via the official Kodi repository
 - On some Linux distros Kodi comes packaged without the inputstream.adaptive plugin, in this case please manually install the missing plugin. For example on Ubuntu use the command:
 "sudo apt install kodi-inputstream-adaptive"
 
 ### Changelog
+7.1.0 (2026-10-08)
+- Added Search function
+- Fix Personalities biography
+- LA7 Meteo replaced with Omnibus Meteo in the News and Weather section
+
 7.0.0 (2025-10-23)
 - LA7d channel replaced with the new LA7 Cinema
 - New channel LA7 Eventi
