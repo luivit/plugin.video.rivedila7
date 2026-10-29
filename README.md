@@ -7,6 +7,10 @@ Live Streaming, Replay the last week, LA7 Cinema, On-Demand programs, News & Wea
 "sudo apt install kodi-inputstream-adaptive"
 
 ### Changelog
+7.2.0 (2026-10-29)
+- Migration to the new la7play.it site (Live, Replay, Programs, Movies, News & Weather)
+- Search function adapted to la7play.it
+
 7.1.0 (2026-10-08)
 - Added Search function
 - Fix Personalities biography

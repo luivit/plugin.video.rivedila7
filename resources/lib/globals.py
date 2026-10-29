@@ -19,18 +19,29 @@ class GlobalVariables(object):
     THUMB_PATH = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'images')
     
     URL_BASE = "https://www.la7.it"
-    URL_LIVE_LA7 = "https://www.la7.it/dirette-tv"
-    URL_LIVE_LA7CINEMA = "https://www.la7.it/live-la7cinema"
+    #URL_BASE_LA7CINEMA = "https://www.la7.it/la7cinema"
+    # Dal 27/10/2026 dirette e rivedi sono sul nuovo sito la7play.it (Next.js)
+    URL_BASE_LA7PLAY = "https://www.la7play.it"
+    URL_LIVE_LA7 = "https://www.la7play.it/dirette/la7"
+    URL_LIVE_LA7CINEMA = "https://www.la7play.it/dirette/la7-cinema"
     URL_LIVE_LA7EVENTI = "https://www.la7.it/live-eventi-la7"
     URL_MPD_LA7EVENTI = 'https://d15umi5iaezxgx.cloudfront.net/LA7FEED01/DRM/DASH/Live.mpd'
     URL_TGDIGITAL = "https://tg.la7.it/listing/tg-digital?page=0"
     URL_BASE_TGDIGITAL = "https://tg.la7.it"
-    URL_RIVEDILA7 = "https://www.la7.it/rivedila7/0/la7"
-    URL_RIVEDILA7CINEMA = "https://www.la7.it/rivedila7/0/la7cinema"
+    URL_RIVEDILA7 = "https://www.la7play.it/guida-tv-rivedi/la7"
+    URL_RIVEDILA7CINEMA = "https://www.la7play.it/guida-tv-rivedi/la7-cinema"
+    URL_FILM = "https://www.la7play.it/la7-cinema-tutti-i-film"
+    # API GraphQL (query persistite, gli hash sono quelli usati dal sito)
+    URL_GQL = "https://www.la7play.it/api/gql/"
+    GQL_TUTTI_PROGRAMMI = "f7034d55158fc906"
+    GQL_PUNTATE = "6efab682c9aacc6f"
+    # valori di default, normalmente letti dalle impostazioni del player nella pagina
+    URL_CDN_VOD = "https://awsvodpkg.iltrovatore.it"
+    URL_DRM_TOKEN = "https://svc-01.la7play.it/DRM/tk.php"
     URL_PROGRAMMI = "https://www.la7.it/programmi"
     URL_TUTTI_PROGRAMMI = "https://www.la7.it/tutti-i-programmi"
     URL_TECHE_LA7 = "https://www.la7.it/tutti-i-personaggi"
-    URL_CERCA_LA7 = "https://www.la7.it/ricerca?query="
+    URL_CERCA_LA7 = "https://www.la7play.it/ricerca"
 
 
 
@@ -46,8 +57,8 @@ class GlobalVariables(object):
         'accept-language': 'en,en-US;q=0.9,it;q=0.8',
         'dnt': '1',
         'te': 'trailers',
-        'origin': 'https://www.la7.it',
-        'referer': 'https://www.la7.it/',
+        'origin': 'https://www.la7play.it',
+        'referer': 'https://www.la7play.it/',
     }
 
     def __init__(self):
