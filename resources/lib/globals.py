@@ -1,6 +1,8 @@
 # Everything that is to be globally accessible must be defined in this module.
-# Using the Kodi reuseLanguageInvoker feature, only the code in the addon.py module will be run every time the addon is called,
-# all other modules (imports) are initialized only on the first invocation of the add-on.
+# Kodi's reuseLanguageInvoker is a setting of the add-on, not a property of the code: this
+# module may be imported once or on every invocation, so nothing here may assume otherwise.
+# What is valid for a single invocation is rebuilt in init_globals(), the rest is derived from
+# the add-on itself.
 
 from urllib.parse import parse_qsl
 
@@ -17,6 +19,7 @@ class GlobalVariables(object):
     PLUGIN_URL = "plugin://plugin.video.rivedila7/"
     FANART_PATH = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'fanart.jpg')
     THUMB_PATH = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'images')
+    CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
     
     URL_BASE = "https://www.la7.it"
     URL_LIVE_LA7 = "https://www.la7.it/dirette-tv"
@@ -47,9 +50,9 @@ class GlobalVariables(object):
 
     def __init__(self):
         """Do nothing on constructing the object"""
-        # The class initialization (GlobalVariables) will only take place at the first initialization of this module
-        # on subsequent add-on invocations (invoked by reuseLanguageInvoker) will have no effect.
-        # Define here only the variables necessary for the correct initialization of the other project modules
+        # Constructing this object must have no side effects: the module is imported before
+        # Kodi has called the add-on even once, so anything that needs the add-on (settings,
+        # paths, language) is read in init_globals() instead.
         self.IS_ADDON_FIRSTRUN = None
         self.ADDON = None
         self.ADDON_DATA_PATH = None
@@ -72,7 +75,6 @@ class GlobalVariables(object):
         self.PLOT = str(G.PARAMS.get("plot", ""))
         self.PLAY = str(G.PARAMS.get("play", ""))
         self.PAGENUM = 0
-        self.LIST_PROGRAMMI = []
 
         if self.IS_ADDON_FIRSTRUN:
             # Global variables that do NOT need to be updated at every addon run

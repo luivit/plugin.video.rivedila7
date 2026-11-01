@@ -26,6 +26,7 @@ ADDON_PATH = ROOT
 ITEMS = []      # directory items, in the order the add-on added them
 RESOLVED = []   # setResolvedUrl calls
 DIALOGS = []    # every dialog box, as text: any of them fails a test
+ENDINGS = []    # every endOfDirectory call, as {'succeeded': bool}
 CLOSED = False  # Kodi: after endOfDirectory, the directory is closed
 DROPPED = 0     # items Kodi would have discarded
 
@@ -127,6 +128,7 @@ class _Lister(object):
 
     def endOfDirectory(self, handle=None, succeeded=True, updateListing=False, cacheToDisc=True):
         global CLOSED
+        ENDINGS.append({'succeeded': succeeded})
         CLOSED = True
         return True
 
@@ -226,11 +228,25 @@ def install_stubs():
 
     CLOSED = False
     DROPPED = 0
+    del ITEMS[:]
+    del ENDINGS[:]
+
+
+def unload_addon_modules():
+    """Forget the add-on, so the next import re-reads the sources."""
+    for name in [n for n in sys.modules if n.startswith('resources.lib')]:
+        del sys.modules[name]
+
+
+def reset_directory():
+    """Reopen the directory, as a new add-on call does: Kodi keeps one per handle."""
+    global CLOSED, DROPPED
+    CLOSED = False
+    DROPPED = 0
 
 
 def run_addon(query, argv_handle='1'):
     """Call the add-on entry point and return (items, resolved, dialogs)."""
-    global CLOSED, DROPPED
     install_stubs()
     del ITEMS[:]
     del RESOLVED[:]
@@ -238,8 +254,7 @@ def run_addon(query, argv_handle='1'):
 
     if ROOT not in sys.path:
         sys.path.insert(0, ROOT)
-    for name in [n for n in sys.modules if n.startswith('resources.lib')]:
-        del sys.modules[name]
+    unload_addon_modules()
 
     from resources.lib import plugin
     try:
