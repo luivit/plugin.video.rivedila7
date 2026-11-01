@@ -19,8 +19,7 @@ class GlobalVariables(object):
     PLUGIN_URL = "plugin://plugin.video.rivedila7/"
     FANART_PATH = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'fanart.jpg')
     THUMB_PATH = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'images')
-    CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
-    
+
     # the site the add-on reads; the old la7.it pages still served here are the ones
     # the scrapers in this release replace, one section at a time
     URL_PLAY_BASE = "https://www.la7play.it"
@@ -30,11 +29,7 @@ class GlobalVariables(object):
     URL_LIVE_LA7CINEMA = "https://www.la7.it/live-la7cinema"
     URL_RIVEDILA7 = "https://www.la7.it/rivedila7/0/la7"
     URL_RIVEDILA7CINEMA = "https://www.la7.it/rivedila7/0/la7cinema"
-    URL_PROGRAMMI = "https://www.la7.it/programmi"
-    URL_TUTTI_PROGRAMMI = "https://www.la7.it/tutti-i-programmi"
     URL_CERCA_LA7 = "https://www.la7.it/ricerca?query="
-
-
 
     # la7play.it answers with persisted GraphQL queries: the id of the query, not its
     # text, is part of the URL (re-read them from the site when one stops answering)
@@ -84,6 +79,8 @@ class GlobalVariables(object):
         self.MODE = str(G.PARAMS.get("mode", ""))
         self.GIORNO = str(G.PARAMS.get("giorno", ""))
         self.LINK = str(G.PARAMS.get("link", ""))
+        self.GRUPPO = str(G.PARAMS.get("gruppo", ""))
+        self.LETTERA = str(G.PARAMS.get("lettera", ""))
         self.TITOLO = str(G.PARAMS.get("titolo", ""))
         self.THUMB = str(G.PARAMS.get("thumb", ""))
         self.PLOT = str(G.PARAMS.get("plot", ""))

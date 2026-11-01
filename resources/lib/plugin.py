@@ -1,8 +1,9 @@
 """The add-on entry point: Kodi's arguments become one call into the add-on.
 
-Nothing is listed, parsed or played here. This module owns exactly two things:
-the parameters Kodi passes on every invocation (they end up in the globals), and
-the single place where an unexpected AddonError is turned into one dialog.
+Nothing is listed, parsed or played here. This module owns exactly three things:
+the parameters Kodi passes on every invocation (they end up in the globals), the
+table that says which function serves which mode, and the single place where a
+failure becomes one log line and one dialog.
 """
 
 from resources.lib.globals import G
@@ -11,58 +12,74 @@ from resources.lib.la7play import catalog, program, search
 from resources.lib.playback import drm, streams
 
 
-def dispatch():
-    """Route the mode Kodi asked for to the module that implements it."""
-    if G.MODE == "diretta_la7":
-        drm.play_dirette(G.URL_LIVE_LA7, True)
+def diretta_la7():
+    """Live: two channels, two fixed manifests."""
+    drm.play_dirette(G.URL_LIVE_LA7, True)
 
-    elif G.MODE == "diretta_la7cinema":
-        drm.play_dirette(G.URL_LIVE_LA7CINEMA, True)
 
-    elif G.MODE == "rivedi_la7":
-        if G.PLAY == "":
-            if G.GIORNO == "":
-                program.rivedi(G.URL_RIVEDILA7, 'rivedila7.jpg')
-            else:
-                program.rivedi_giorno()
-        else:
-            streams.play_video(G.PLAY, False)
+def diretta_la7cinema():
+    """Live: the cinema channel."""
+    drm.play_dirette(G.URL_LIVE_LA7CINEMA, True)
 
-    elif G.MODE == "rivedi_la7cinema":
-        if G.PLAY == "":
-            if G.GIORNO == "":
-                program.rivedi(G.URL_RIVEDILA7CINEMA, 'direttalivela7cinema.jpg')
-            else:
-                program.rivedi_giorno()
-        else:
-            streams.play_video(G.PLAY, False)
 
-    elif G.MODE == "tutti_programmi":
-        if G.PLAY == "":
-            if G.LINK == "":
-                catalog.programmi_lettera()
-            else:
-                program.video_programma()
-        else:
-            streams.play_video(G.PLAY, False)
-
-    elif G.MODE == "la7_prime":
-        if G.PLAY == "":
-            if G.LINK == "":
-                catalog.programmi_la7prime()
-            else:
-                program.video_programma()
-        else:
-            streams.play_video(G.PLAY, False)
-
-    elif G.MODE == "cerca_la7":
-        if G.PLAY == "":
-            search.cerca_la7()
-        else:
-            search.play_result(G.PLAY)
-
+def rivedi_la7():
+    """LA7 replays: a day of the guide, or one episode."""
+    if G.PLAY:
+        streams.play_video(G.PLAY, False)
+    elif G.GIORNO:
+        program.rivedi_giorno()
     else:
-        catalog.show_root_menu()
+        program.rivedi(G.URL_RIVEDILA7, 'rivedila7.jpg')
+
+
+def rivedi_la7cinema():
+    """LA7 Cinema replays: a day of the guide, or one episode."""
+    if G.PLAY:
+        streams.play_video(G.PLAY, False)
+    elif G.GIORNO:
+        program.rivedi_giorno()
+    else:
+        program.rivedi(G.URL_RIVEDILA7CINEMA, 'direttalivela7cinema.jpg')
+
+
+def tutti_programmi():
+    """The programs page: its groups, the A-Z list, or one program."""
+    if G.PLAY:
+        streams.play_video(G.PLAY, False)
+    elif G.LINK:
+        program.video_programma()
+    elif G.GRUPPO:
+        catalog.gruppo(G.GRUPPO)
+    elif G.LETTERA:
+        catalog.tutti_programmi()
+    else:
+        catalog.programmi()
+
+
+def cerca_la7():
+    """The site's search, or one of its results."""
+    if G.PLAY:
+        search.play_result(G.PLAY)
+    else:
+        search.cerca_la7()
+
+
+# which function serves which mode: the root menu and this table are one thing
+MODES = {
+    'diretta_la7': diretta_la7,
+    'diretta_la7cinema': diretta_la7cinema,
+    'rivedi_la7': rivedi_la7,
+    'rivedi_la7cinema': rivedi_la7cinema,
+    'film': catalog.film,
+    'documentari': catalog.documentari,
+    'tutti_programmi': tutti_programmi,
+    'cerca_la7': cerca_la7,
+}
+
+
+def dispatch():
+    """Serve the mode Kodi asked for; an empty mode is the root menu."""
+    MODES.get(G.MODE, catalog.show_root_menu)()
 
 
 def run(argv):
@@ -78,3 +95,7 @@ def run(argv):
         dispatch()
     except AddonError as error:
         report(error)
+    except Exception as error:
+        # a bug or a section that is not ported yet: still one dialog, never a
+        # traceback on the device, and the section that failed names the log line
+        report(AddonError(G.MODE, error))

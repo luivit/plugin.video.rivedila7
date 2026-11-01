@@ -21,6 +21,11 @@ What is saved:
                           fifteen days and 300+ programs, 700 kB of fixture for
                           the same shapes)
     gql-nodePage.json     the answer of the nodePage query for "otto-e-mezzo"
+    gql-allPrograms.json  the flat index of programs behind the programs page
+    gql-nsContentHub-programmi.json
+                          the programs page as data: its carousels and the few
+                          programs of each that are kept (the nine groups are all
+                          real, three items each stand in for the rest)
 
 A page fixture is the payload of the page, re-encoded as a single push chunk: the
 site sends it in two or three chunks, which is a delivery detail `decode()` folds
@@ -39,14 +44,21 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 RSC_PUSH = 'self.__next_f.push('
 
 # query name -> persisted hash, as in resources/lib/globals.py
-NODE_PAGE = 'e9d39e6838f7f588'
+QUERIES = {
+    'nodePage': 'e9d39e6838f7f588',
+    'allPrograms': 'f7034d55158fc906',
+    'nsContentHub': '0f3f2c4225230faf',
+}
 
 FIXTURES = [
     # file, kind, what, trimming
     ('page-programma.html', 'page', SITE + '/otto-e-mezzo', None),
     ('page-guida-la7.html', 'page', SITE + '/guida-tv-rivedi/la7',
      {'key': 'giorno', 'days': 3, 'programs': 3}),
-    ('gql-nodePage.json', 'gql', {'query': NODE_PAGE, 'variables': {'path': 'otto-e-mezzo'}}, None),
+    ('gql-nodePage.json', 'gql', {'query': 'nodePage', 'variables': {'path': 'otto-e-mezzo'}}, None),
+    ('gql-allPrograms.json', 'gql', {'query': 'allPrograms', 'variables': None}, None),
+    ('gql-nsContentHub-programmi.json', 'gql',
+     {'query': 'nsContentHub', 'variables': {'path': '/programmi'}}, {'items': 3}),
 ]
 
 
@@ -148,9 +160,21 @@ def gql(query, variables=None):
     return urllib.request.urlopen(request, timeout=60).read().decode('utf-8', 'replace')
 
 
+def trim_slots(text, items):
+    """Keep every carousel of a hub page, and the first items of each."""
+    answer = json.loads(text)
+    route = (answer.get('data') or {}).get('route') or {}
+    for slot in (route.get('entity') or {}).get('contentSlots') or []:
+        paginated = slot.get('paginatedItems') or {}
+        if isinstance(paginated.get('items'), list):
+            paginated['items'] = paginated['items'][:items]
+    return json.dumps(answer, separators=(',', ':'))
+
+
 def build(kind, what, trimming):
     if kind == 'gql':
-        return gql(what['query'], what['variables'])
+        body = gql(QUERIES[what['query']], what['variables'])
+        return trim_slots(body, trimming['items']) if trimming else body
     body = payload(fetch(what))
     if trimming:
         body = trim(body, trimming['key'], trimming['days'], trimming['programs'])

@@ -44,10 +44,18 @@ msgctxt "#32006"
 msgid "Programs"
 msgstr "Programmi"
 
-msgctxt "#32010"
-msgid "LA7 Prime"
-msgstr "LA7 Prime"
-
 msgctxt "#32012"
 msgid "Search on LA7"
 msgstr "Cerca su LA7"
+
+msgctxt "#32013"
+msgid "All Films"
+msgstr "Tutti i Film"
+
+msgctxt "#32014"
+msgid "Documentaries"
+msgstr "Documentari"
+
+msgctxt "#32015"
+msgid "All programs (A-Z)"
+msgstr "Tutti i programmi (A-Z)"

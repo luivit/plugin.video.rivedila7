@@ -27,11 +27,18 @@ ITEMS = []      # directory items, in the order the add-on added them
 RESOLVED = []   # setResolvedUrl calls
 DIALOGS = []    # every dialog box, as text: any of them fails a test
 ENDINGS = []    # every endOfDirectory call, as {'succeeded': bool}
+LOGS = []       # every xbmc.log line, in the order the add-on wrote it
 CLOSED = False  # Kodi: after endOfDirectory, the directory is closed
 DROPPED = 0     # items Kodi would have discarded
 
 # Every section the add-on must be able to open; grows with the code.
-SECTIONS = []
+# (mode, parameters, minimum entries)
+SECTIONS = [
+    ('', {}, 8),                                     # the root menu
+    ('tutti_programmi', {}, 10),                     # the groups of the programs page + A-Z
+    ('tutti_programmi', {'gruppo': 'Prima serata'}, 3),
+    ('tutti_programmi', {'lettera': 'tutti'}, 20),
+]
 
 
 class ListItem(object):
@@ -163,7 +170,7 @@ def install_stubs():
 
     xbmc = types.ModuleType('xbmc')
     xbmc.LOGDEBUG, xbmc.LOGINFO, xbmc.LOGWARNING, xbmc.LOGERROR = 0, 1, 2, 3
-    xbmc.log = lambda message, level=1: None
+    xbmc.log = lambda message, level=1: LOGS.append(message)
     xbmc.executebuiltin = lambda command, wait=False: None
     xbmc.getCondVisibility = lambda condition: False
     xbmc.getInfoLabel = lambda label: ''
@@ -230,6 +237,7 @@ def install_stubs():
     DROPPED = 0
     del ITEMS[:]
     del ENDINGS[:]
+    del LOGS[:]
 
 
 def unload_addon_modules():
@@ -245,8 +253,12 @@ def reset_directory():
     DROPPED = 0
 
 
-def run_addon(query, argv_handle='1'):
-    """Call the add-on entry point and return (items, resolved, dialogs)."""
+def run_addon(query, argv_handle='1', prepare=None):
+    """Call the add-on entry point and return (items, resolved, dialogs).
+
+    ``prepare()`` runs after the add-on is imported and before it is called: it is
+    how a test hands a section an answer of the site without a network.
+    """
     install_stubs()
     del ITEMS[:]
     del RESOLVED[:]
@@ -257,6 +269,8 @@ def run_addon(query, argv_handle='1'):
     unload_addon_modules()
 
     from resources.lib import plugin
+    if prepare is not None:
+        prepare()
     try:
         plugin.run(['plugin://plugin.video.rivedila7/', argv_handle, query])
     except Exception as error:
