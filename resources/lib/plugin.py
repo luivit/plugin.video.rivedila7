@@ -23,23 +23,23 @@ def diretta_la7cinema():
 
 
 def rivedi_la7():
-    """LA7 replays: a day of the guide, or one episode."""
-    if G.PLAY:
-        streams.play_video(G.PLAY, False)
-    elif G.GIORNO:
-        program.rivedi_giorno()
-    else:
-        program.rivedi(G.URL_RIVEDILA7, 'rivedila7.jpg')
+    """LA7 replays: the days of its guide, one day of it, or one episode."""
+    _replay('rivedila7.jpg')
 
 
 def rivedi_la7cinema():
-    """LA7 Cinema replays: a day of the guide, or one episode."""
+    """LA7 Cinema replays: the days of its guide, one day of it, or one episode."""
+    _replay('direttalivela7cinema.jpg')
+
+
+def _replay(thumb):
+    """The three depths of a replay section: the guide, a day, an episode."""
     if G.PLAY:
         streams.play_video(G.PLAY, False)
     elif G.GIORNO:
-        program.rivedi_giorno()
+        program.giorno()
     else:
-        program.rivedi(G.URL_RIVEDILA7CINEMA, 'direttalivela7cinema.jpg')
+        program.giorni(thumb)
 
 
 def tutti_programmi():

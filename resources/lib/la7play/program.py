@@ -1,11 +1,17 @@
-"""Replays: the TV guide days, and a program page with its week and its archive.
+"""Replays: the days of the TV guide, the replays of a day, a program's week.
 
-Both listings are still scraped from the pages the site renders for a browser;
-they move to the payload in the commits that follow. What already holds here is
-the lifecycle: one Directory per folder, closed once, failures through a dialog
-and never as a traceback.
+The guide of la7play.it publishes the whole week as one page, every program with
+the path of its replay, so the days and the episodes are two reads of the same
+payload and nothing here scrapes markup. A program page publishes no episode list
+at all: its week is that guide filtered on its own path, which is why the guide is
+read for both channels. The program page itself is still scraped, and moves here
+in the commits that follow.
+
+What holds throughout: one Directory per folder, closed once on every path, and a
+failure named by the section that failed.
 """
 
+import datetime
 import os
 import sys
 
@@ -18,48 +24,123 @@ from bs4 import BeautifulSoup
 
 from resources.lib.globals import G
 from resources.lib.kodi import dialogs
+from resources.lib.kodi.dialogs import AddonError
 from resources.lib.kodi.directory import Directory
+from resources.lib.la7play import client, payload
+
+GIORNI_SETTIMANA = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica']
+MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio',
+        'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre']
 
 
-def rivedi(url, thumb):
-    """The days the guide offers for a channel."""
+def giorni(thumb):
+    """The days of the channel's guide that still have a replay, newest first."""
     with Directory() as directory:
-        req = Request(url, headers={'user-agent': G.HEADERS_SET['user-agent']})
-        page = urlopen(req)
-        html = BeautifulSoup(page, 'html.parser')
-        G.GIORNO = html.find('div', class_='block block-system').find_all('div', class_=['item item--menu-guida-tv', 'item item--menu-guida-tv active'])
-        # xbmc.log('GIORNO----------: '+str(G.GIORNO),xbmc.LOGINFO)
-        if G.GIORNO:
-            for div in reversed(G.GIORNO):
-                date_day = div.find('div', class_='giorno-numero').text.strip()
-                date_month = div.find('div', class_='giorno-mese').text.strip()
-                date_row_week = div.find('div', class_='giorno-text').text.strip()
-                a = div.a.get('href').strip()
-                liStyle = xbmcgui.ListItem(date_row_week + " " + date_day + " " + date_month, offscreen=True)
-                liStyle.setArt({'thumb': os.path.join(G.THUMB_PATH, thumb), 'fanart': G.FANART_PATH})
-                directory.add({"mode": G.MODE, "giorno": a}, liStyle)
+        days = [day for day in _guide(G.MODE, _guida_url()) if _has_replay(day)]
+        if not days:
+            # a guide with nothing to replay is not a folder: it is a failure to report
+            raise AddonError(G.MODE, LookupError('the guide publishes no replay'))
+        for day in reversed(days):
+            item = xbmcgui.ListItem(giorno_label(day['data']), offscreen=True)
+            item.setArt({'thumb': os.path.join(G.THUMB_PATH, thumb), 'fanart': G.FANART_PATH})
+            directory.add({'mode': G.MODE, 'giorno': day['data']}, item)
 
 
-def rivedi_giorno():
-    """The replays of one day of the guide."""
+def giorno():
+    """The replays one day of the guide publishes."""
     with Directory(content='episodes') as directory:
-        req = Request(G.URL_BASE + G.GIORNO, headers={'user-agent': G.HEADERS_SET['user-agent']})
-        page = urlopen(req)
-        html = BeautifulSoup(page, 'html.parser')
-        guida_tv = html.find(id="content_guida_tv_rivedi").find_all('div', class_='item item--guida-tv')
-        if guida_tv:
-            for div in guida_tv:
-                orario = div.find('div', class_='orario').contents[0].strip()
-                nome = div.find('div', class_='property').text.strip()
-                thumb = 'https:' + div.find('div', class_='bg-img lozad').get('data-background-image')
-                plot = div.find('div', class_='occhiello').text.strip()
-                if div.a:
-                    urll = div.a.get('href').strip()
-                    # xbmc.log('------LINK------: '+str(urll),xbmc.LOGINFO)
-                    liStyle = xbmcgui.ListItem(orario + " " + nome, offscreen=True)
-                    liStyle.setArt({'thumb': thumb, 'fanart': G.FANART_PATH})
-                    liStyle.setInfo('video', {'plot': plot})
-                    directory.add({"mode": G.MODE, "play": urll, "titolo": nome, "thumb": thumb, "plot": plot}, liStyle, folder=False)
+        day = next((day for day in _guide(G.MODE, _guida_url()) if day['data'] == G.GIORNO), None)
+        if day is None:
+            raise AddonError(G.MODE, LookupError(G.GIORNO))
+        for programma in day['programma']:
+            if _path(programma):
+                orario = (programma.get('ora') or '').strip()
+                params, item = _episode(programma, orario + ' ' + _title(programma))
+                directory.add(params, item, folder=False, unique=True)
+
+
+def repliche(pathname):
+    """The replays of one program in the week of the guides, newest day first.
+
+    Returns how many replays were listed: a program the week does not cover is
+    listed from its page instead, which is the caller's business.
+    """
+    added = 0
+    page = pathname.rstrip('/')
+    seen = set()
+    with Directory(content='episodes') as directory:
+        for url in (G.URL_RIVEDILA7, G.URL_RIVEDILA7CINEMA):
+            for day in reversed(_guide(G.MODE, url)):
+                for programma in day['programma']:
+                    path = _path(programma)
+                    # a program owns the replays below its page, not the ones of a
+                    # program whose name merely starts the same way
+                    if path == page or path in seen or not payload.is_ancestor(page, path):
+                        continue
+                    seen.add(path)
+                    params, item = _episode(programma, giorno_label(day['data']) + ' ' + _title(programma))
+                    directory.add(params, item, folder=False)
+                    added += 1
+    return added
+
+
+def giorno_label(data):
+    """'27-10-2026' in the words of the guide: 'martedi 27 ottobre'."""
+    try:
+        day, month, year = [int(part) for part in data.split('-')]
+        date = datetime.date(year, month, day)
+    except (AttributeError, TypeError, ValueError):
+        return data
+    return '%s %d %s' % (GIORNI_SETTIMANA[date.weekday()], date.day, MESI[date.month - 1])
+
+
+def _guida_url():
+    """The guide page of the channel the add-on is showing."""
+    return G.URL_RIVEDILA7CINEMA if G.MODE == 'rivedi_la7cinema' else G.URL_RIVEDILA7
+
+
+def _guide(section, url):
+    """The days a guide page publishes, oldest first, each with its programs."""
+    try:
+        text = payload.decode(client.fetch_html(url))
+    except client.SiteError as cause:
+        raise AddonError(section, cause)
+    days = []
+    for day in payload.value(text, 'giorno') or []:
+        data = (day.get('@attributes') or {}).get('data')
+        if data:
+            days.append({'data': data, 'programma': day.get('programma') or []})
+    return days
+
+
+def _has_replay(day):
+    """A day is worth a folder when one of its programs has a replay."""
+    return any(_path(programma) for programma in day['programma'])
+
+
+def _path(programma):
+    """The path of the replay of a program of the guide, or ''."""
+    return (programma.get('pathname') or '').strip()
+
+
+def _title(programma):
+    """The title the guide gives a program of the day."""
+    return (programma.get('titolo') or '').strip()
+
+
+def _episode(programma, label):
+    """One replay: the item Kodi shows, and where a click on it goes."""
+    thumb = programma.get('immagine_programma') or programma.get('immagine_scena') or ''
+    plot = (programma.get('sinossi') or '').strip()
+    item = xbmcgui.ListItem(label, offscreen=True)
+    art = {'fanart': G.FANART_PATH}
+    if thumb:
+        art['thumb'] = thumb
+    item.setArt(art)
+    item.setInfo('video', {'plot': plot})
+    params = {'mode': G.MODE, 'play': G.URL_PLAY_BASE + _path(programma),
+              'titolo': _title(programma), 'thumb': thumb, 'plot': plot}
+    return params, item
 
 
 # PAGINA PRINCIPALE

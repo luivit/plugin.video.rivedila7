@@ -27,8 +27,8 @@ class GlobalVariables(object):
     URL_BASE = "https://www.la7.it"
     URL_LIVE_LA7 = "https://www.la7.it/dirette-tv"
     URL_LIVE_LA7CINEMA = "https://www.la7.it/live-la7cinema"
-    URL_RIVEDILA7 = "https://www.la7.it/rivedila7/0/la7"
-    URL_RIVEDILA7CINEMA = "https://www.la7.it/rivedila7/0/la7cinema"
+    URL_RIVEDILA7 = "https://www.la7play.it/guida-tv-rivedi/la7"
+    URL_RIVEDILA7CINEMA = "https://www.la7play.it/guida-tv-rivedi/la7-cinema"
     URL_CERCA_LA7 = "https://www.la7.it/ricerca?query="
 
     # la7play.it answers with persisted GraphQL queries: the id of the query, not its

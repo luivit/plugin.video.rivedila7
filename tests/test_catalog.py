@@ -18,6 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
 
 from tests import harness
+from tests.site import Site, fixture
 
 MENU = ['[B]string 32002[/B]', '[B]string 32009[/B]', '[B]string 32001[/B]', '[B]string 32004[/B]',
         '[B]string 32013[/B]', '[B]string 32014[/B]', '[B]string 32006[/B]', '[B]string 32012[/B]']
@@ -27,39 +28,6 @@ MODES = ['diretta_la7', 'diretta_la7cinema', 'rivedi_la7', 'rivedi_la7cinema',
 
 GROUPS = ['Prima serata', 'La giornata', 'La7Play Original', 'Intrattenimento culturale',
           'Le nostre inchieste', 'Viaggia con noi', 'Lifestyle', 'Eventi', 'Teche']
-
-
-def fixture(name):
-    with open(os.path.join(HERE, 'fixtures', name), encoding='utf-8') as open_fixture:
-        return open_fixture.read().encode('utf-8')
-
-
-class Answer(object):
-    """What urlopen returns: something with read()."""
-
-    def __init__(self, body):
-        self.body = body
-
-    def read(self):
-        return self.body
-
-
-class Site(object):
-    """Stands in for urlopen: answers the queries it was given, from fixtures."""
-
-    def __init__(self, answers=None, error=None):
-        self.answers = answers or {}
-        self.error = error
-        self.asked = []
-
-    def __call__(self, request, timeout=None):
-        self.asked.append(request.full_url)
-        if self.error is not None:
-            raise self.error
-        for query, body in self.answers.items():
-            if '/api/gql/%s' % query in request.full_url:
-                return Answer(body)
-        raise AssertionError('a query this test did not expect: %s' % request.full_url)
 
 
 def all_programs(rows):

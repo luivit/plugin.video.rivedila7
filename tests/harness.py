@@ -14,6 +14,7 @@ Usage:
     tests/harness.py smoke                  walk every section in SECTIONS
 """
 
+import datetime
 import os
 import sys
 import types
@@ -31,6 +32,10 @@ LOGS = []       # every xbmc.log line, in the order the add-on wrote it
 CLOSED = False  # Kodi: after endOfDirectory, the directory is closed
 DROPPED = 0     # items Kodi would have discarded
 
+# the day a smoke run asks the guide for: it lists the days that have aired, so the
+# newest day it can be asked about is yesterday
+YESTERDAY = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%d-%m-%Y')
+
 # Every section the add-on must be able to open; grows with the code.
 # (mode, parameters, minimum entries)
 SECTIONS = [
@@ -38,6 +43,9 @@ SECTIONS = [
     ('tutti_programmi', {}, 10),                     # the groups of the programs page + A-Z
     ('tutti_programmi', {'gruppo': 'Prima serata'}, 3),
     ('tutti_programmi', {'lettera': 'tutti'}, 20),
+    ('rivedi_la7', {}, 3),                           # the days of the guide
+    ('rivedi_la7cinema', {}, 3),
+    ('rivedi_la7', {'giorno': YESTERDAY}, 3),        # the replays of a day
 ]
 
 
