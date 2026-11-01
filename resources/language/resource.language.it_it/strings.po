@@ -40,25 +40,13 @@ msgctxt "#32005"
 msgid "Unable to view this program"
 msgstr "Impossibile visualizzare questo programma"
 
-msgctxt "#32007"
-msgid "News & Weather"
-msgstr "TG & Meteo"
-
 msgctxt "#32006"
 msgid "Programs"
 msgstr "Programmi"
 
-msgctxt "#32008"
-msgid "Personalities"
-msgstr "Personaggi"
-
 msgctxt "#32010"
 msgid "LA7 Prime"
 msgstr "LA7 Prime"
-
-msgctxt "#32011"
-msgid "LA7 Eventi Live"
-msgstr "Diretta LA7 Eventi"
 
 msgctxt "#32012"
 msgid "Search on LA7"

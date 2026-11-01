@@ -40,24 +40,12 @@ msgctxt "#32005"
 msgid "Unable to view this program"
 msgstr ""
 
-msgctxt "#32007"
-msgid "News & Weather"
-msgstr ""
-
 msgctxt "#32006"
 msgid "Programs"
 msgstr ""
 
-msgctxt "#32008"
-msgid "Personalities"
-msgstr ""
-
 msgctxt "#32010"
 msgid "LA7 Prime"
-msgstr ""
-
-msgctxt "#32011"
-msgid "LA7 Eventi Live"
 msgstr ""
 
 msgctxt "#32012"
