@@ -21,6 +21,10 @@ class GlobalVariables(object):
     THUMB_PATH = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'images')
     CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
     
+    # the site the add-on reads; the old la7.it pages still served here are the ones
+    # the scrapers in this release replace, one section at a time
+    URL_PLAY_BASE = "https://www.la7play.it"
+
     URL_BASE = "https://www.la7.it"
     URL_LIVE_LA7 = "https://www.la7.it/dirette-tv"
     URL_LIVE_LA7CINEMA = "https://www.la7.it/live-la7cinema"
@@ -31,6 +35,16 @@ class GlobalVariables(object):
     URL_CERCA_LA7 = "https://www.la7.it/ricerca?query="
 
 
+
+    # la7play.it answers with persisted GraphQL queries: the id of the query, not its
+    # text, is part of the URL (re-read them from the site when one stops answering)
+    GQL_QUERIES = {
+        'allPrograms': 'f7034d55158fc906',
+        'filteredNodeReplicas': 'e4ec45c8e38bb081',
+        'nodePage': 'e9d39e6838f7f588',
+        'nsContentHub': '0f3f2c4225230faf',
+        'siteSearch': '4da1e384f8a63808',
+    }
 
     # DRM config
     DRM = 'com.widevine.alpha'

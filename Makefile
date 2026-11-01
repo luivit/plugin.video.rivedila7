@@ -5,7 +5,7 @@ DEST ?= $(HOME)/.var/app/tv.kodi.Kodi/data/addons/$(ADDON)
 BUILD ?= /tmp/$(ADDON)-build
 ZIP ?= $(HOME)/Downloads/$(ADDON)-$(VERSION).zip
 
-.PHONY: all test smoke walk zip deploy clean
+.PHONY: all test smoke walk fixtures zip deploy clean
 
 all: test smoke
 
@@ -17,6 +17,9 @@ smoke:               ## live check of every section against the site
 
 walk:                ## make walk ARGS="tutti_programmi --depth 2"
 	$(PY) tests/harness.py walk $(ARGS)
+
+fixtures:            ## recapture the site fixtures the offline tests read
+	$(PY) tests/fixtures/capture.py
 
 zip:                 ## build the installable ZIP from the committed tree
 	rm -rf $(BUILD) && mkdir -p $(BUILD)/$(ADDON)
