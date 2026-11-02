@@ -36,6 +36,14 @@ class KodiRulesTest(unittest.TestCase):
         dialog.ok('RivediLA7', 'cannot read the page')
         self.assertEqual(harness.DIALOGS, ['RivediLA7: cannot read the page'])
 
+    def test_a_list_item_reads_its_label_the_way_kodi_does(self):
+        """Kodi's ListItem has getLabel() and no `label`: a stub that offered one hid
+        a listing that crashed on the device the first time it was opened there."""
+        item = harness.ListItem('Puntate')
+        self.assertEqual(item.getLabel(), 'Puntate')
+        self.assertFalse(hasattr(item, 'label'),
+                         'xbmcgui.ListItem has no .label attribute')
+
 
 class SmokeGateTest(unittest.TestCase):
     def test_smoke_refuses_to_pass_without_sections(self):

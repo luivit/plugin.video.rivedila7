@@ -40,7 +40,7 @@ class Directory(object):
         """Add one item. ``unique`` skips an item whose label is already listed."""
         if self._closed:
             raise RuntimeError('item added after the directory was closed')
-        label = listitem.label
+        label = listitem.getLabel()
         if unique and label in self._labels:
             return False
         url = G.PLUGIN_URL + '?' + urllib.parse.urlencode(parameters)

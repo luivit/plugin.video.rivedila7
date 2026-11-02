@@ -62,14 +62,29 @@ SECTIONS = [
 
 
 class ListItem(object):
+    """xbmcgui.ListItem, with the reads the add-on makes and no others.
+
+    Kodi's ListItem has no `label` attribute: a label is read with `getLabel()`. This
+    stub used to offer one, which is how `directory.py` came to read it and how a
+    listing that worked here failed on the device. What tests inspect (`art`, `info`,
+    `properties`, `path`, `mimetype`) is here because the add-on writes it; the label is
+    not, because the add-on reads it the way Kodi makes it read.
+    """
+
     def __init__(self, label='', offscreen=False):
-        self.label = label
+        self._label = label
         self.art = {}
         self.info = {}
         self.properties = {}
         self.path = ''
         self.content = ''
         self.mimetype = ''
+
+    def getLabel(self):
+        return self._label
+
+    def setLabel(self, label):
+        self._label = label
 
     def setArt(self, art):
         self.art.update(art)
@@ -145,7 +160,7 @@ class _Lister(object):
         if CLOSED:
             DROPPED += 1
             return False
-        ITEMS.append({'url': url, 'label': getattr(listitem, 'label', ''),
+        ITEMS.append({'url': url, 'label': getattr(listitem, 'getLabel', lambda: '')(),
                       'item': listitem, 'folder': isFolder})
         return True
 

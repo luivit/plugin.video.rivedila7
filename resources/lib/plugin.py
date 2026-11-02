@@ -118,7 +118,7 @@ def run(argv):
         # a bug or a section that is not ported yet: still one dialog, never a
         # traceback on the device, and the section that failed names the log line
         _refuse()
-        report(AddonError(G.MODE, error))
+        report(AddonError(G.MODE or 'menu', error))
 
 
 def _refuse():
