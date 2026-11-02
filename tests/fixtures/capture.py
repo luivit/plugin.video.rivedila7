@@ -39,6 +39,11 @@ What is saved:
     gql-nsContentHub-documentari.json
                           the documentary hub: its three carousels and the one
                           documentary it puts in evidence
+    gql-siteSearch.json   the first page of the site's answer for "manovra": one
+                          program, ten videos and six articles, six hits of each
+                          kept (the answer holds twenty per group)
+    gql-siteSearch-page2.json
+                          the second page of the same search, which has 77 pages
 
 A page fixture is the payload of the page, re-encoded as a single push chunk: the
 site sends it in two or three chunks, which is a delivery detail `decode()` folds
@@ -62,6 +67,7 @@ QUERIES = {
     'allPrograms': 'f7034d55158fc906',
     'filteredNodeReplicas': 'e4ec45c8e38bb081',
     'nsContentHub': '0f3f2c4225230faf',
+    'siteSearch': '4da1e384f8a63808',
 }
 
 FIXTURES = [
@@ -81,6 +87,12 @@ FIXTURES = [
     ('gql-filteredNodeReplicas.json', 'gql',
      {'query': 'filteredNodeReplicas', 'variables': {'path': 'Otto e mezzo', 'value': 100}},
      {'nodes': 6}),
+    ('gql-siteSearch.json', 'gql',
+     {'query': 'siteSearch', 'variables': {'q': 'manovra', 'limit': 20, 'page': 1}},
+     {'hits': 6}),
+    ('gql-siteSearch-page2.json', 'gql',
+     {'query': 'siteSearch', 'variables': {'q': 'manovra', 'limit': 20, 'page': 2}},
+     {'hits': 6}),
 ]
 
 
@@ -196,6 +208,16 @@ def trim_hub(text, slots, grid):
     return json.dumps(answer, separators=(',', ':'))
 
 
+def trim_hits(text, count):
+    """Keep the first hits of every group of a search answer."""
+    answer = json.loads(text)
+    result = (answer.get('data') or {}).get('siteSearch') or {}
+    for group in result.get('groups') or []:
+        if isinstance(group.get('hits'), list):
+            group['hits'] = group['hits'][:count]
+    return json.dumps(answer, separators=(',', ':'))
+
+
 def trim_nodes(text, count):
     """Keep the first nodes of an answer: the shape, not the hundred."""
     answer = json.loads(text)
@@ -212,6 +234,8 @@ def build(kind, what, trimming):
             return body
         if 'slots' in trimming:
             return trim_hub(body, trimming['slots'], trimming.get('grid', 0))
+        if 'hits' in trimming:
+            return trim_hits(body, trimming['hits'])
         return trim_nodes(body, trimming['nodes'])
     body = payload(fetch(what))
     if trimming:

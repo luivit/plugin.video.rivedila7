@@ -34,6 +34,11 @@ def notify(message):
                                   xbmcgui.NOTIFICATION_INFO, 3000)
 
 
+def ask(label):
+    """Ask for a line of text; the empty string when the user cancels."""
+    return (xbmcgui.Dialog().input(G.LANGUAGE(label), type=xbmcgui.INPUT_ALPHANUM) or '').strip()
+
+
 def report(error):
     """Log an AddonError and tell the user, once."""
     xbmc.log('RivediLA7: %s' % error, xbmc.LOGERROR)

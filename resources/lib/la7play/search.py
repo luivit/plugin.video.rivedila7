@@ -1,119 +1,97 @@
-"""Search: the site's result page, with its own paging.
+"""Search: the site's own query, page by page.
 
-A search is opened from the menu, reused when playback stops and reopened when
-the site answers with nothing, so the query is kept in a Kodi window property
-rather than in this module: the property survives the add-on being called again
-for the next page.
+The site answers a search with its own grouped result page - a few groups, twenty
+hits each - and every hit says what it is: a video, a film, a program page, or an
+article. A video or a film plays; a program page opens the program, which is a
+folder of its categories. An article is a page of text: it has nothing to watch and
+nothing to open, so it is not shown rather than shown as a folder that leads
+nowhere.
+
+The query is remembered while the user watches something, because Kodi opens the
+folder a video was started from when playback stops: the results come back without
+asking again. Opening the search from the menu forgets it, which is what makes that
+a new search.
 """
 
-from urllib.parse import quote_plus
-from urllib.request import Request, urlopen
-
-import xbmc
-import xbmcgui
-
-from bs4 import BeautifulSoup
-
 from resources.lib.globals import G
-from resources.lib.kodi import dialogs
+from resources.lib.kodi import dialogs, items, window
+from resources.lib.kodi.dialogs import AddonError
 from resources.lib.kodi.directory import Directory
-from resources.lib.playback import streams
+from resources.lib.la7play import client
+
+# the query a previous call kept: a search folder is rebuilt after playback stops
+MEMBER = 'search'
+
+# how many hits the site answers with in a page
+PAGE_SIZE = 20
+
+# the hits that are something to watch, and the hit that is a program to browse
+PLAYABLE = ('video', 'film')
+PROGRAM = 'property'
 
 
 def cerca_la7():
-    """List the results of one search, page by page."""
-    window = xbmcgui.Window(10000)
-    url = G.LINK
-
-    # Se un video è appena terminato (Stop), riusa la ricerca salvata senza riaprire la tastiera
-    era_in_video = window.getProperty('la7_video_in_corso') == '1'
-    window.clearProperty('la7_video_in_corso')
-
-    if era_in_video:
-        url = window.getProperty('la7_search_url')
-
-    # Se non c'è URL (nuova ricerca dal menu principale), apre la tastiera
-    if not url:
-        tastiera = xbmcgui.Dialog()
-        testo = tastiera.input("Ricerca nel sito", type=xbmcgui.INPUT_ALPHANUM)
-        if not testo:
-            Directory().fail()
+    """The results of a search, and the way to the page after them."""
+    query = G.QUERY or window.recall(MEMBER) or dialogs.ask(32012)
+    if not query:
+        # cancelled: the folder closes empty and silent, it does not fail
+        with Directory():
             return
-        query = quote_plus(testo)
-        url = f"{G.URL_CERCA_LA7}{query}"
-        window.setProperty('la7_search_url', url)
-    else:
-        window.setProperty('la7_search_url', url)
-
-    try:
-        req = Request(url, headers={'user-agent': G.HEADERS_SET['user-agent']})
-        page = urlopen(req)
-        soup = BeautifulSoup(page, 'html.parser')
-    except Exception as e:
-        xbmc.log(f'ERRORE RICERCA LA7: {str(e)}', xbmc.LOGERROR)
-        Directory().fail()
-        return
-
-    rows = soup.find_all('div', class_=lambda c: c and 'views-row' in c)
-
-    # Se non trova risultati: notifica e riapre subito la tastiera
-    if not rows:
-        dialogs.notify("La ricerca non ha prodotto risultati")
-        window.clearProperty('la7_search_url')
-        G.LINK = ""
-        cerca_la7()
-        return
-
+    window.remember(MEMBER, query)
+    page = max(G.PAGENUM, 1)
     with Directory() as directory:
-        # Elenco dei video trovati
-        for row in rows:
-            a_tag = row.find('a')
-            if not a_tag or not a_tag.get('href'):
-                continue
-
-            href = a_tag.get('href').strip()
-            video_link = G.URL_BASE + href
-
-            title_div = row.find('div', class_='title')
-            titolo = title_div.text.strip() if title_div else "Senza titolo"
-
-            prop_div = row.find('div', class_='property')
-            programma = prop_div.text.strip() if prop_div else ""
-
-            data_div = row.find('div', class_='data')
-            data_str = data_div.text.strip() if data_div else ""
-
-            label = f"[{data_str}] {titolo}" if data_str else titolo
-
-            thumb = ''
-            thumb_div = row.find('div', class_='bg-img')
-            if thumb_div and thumb_div.has_attr('data-background-image'):
-                thumb = thumb_div.get('data-background-image').strip()
-                if thumb.startswith('//'):
-                    thumb = 'https:' + thumb
-
-            liStyle = xbmcgui.ListItem(label)
-            video_info_tag = liStyle.getVideoInfoTag()
-            video_info_tag.setTitle(label)
-            if programma or data_str:
-                video_info_tag.setPlot(f"{programma} - {data_str}".strip(" -"))
-
-            if thumb:
-                liStyle.setArt({'thumb': thumb, 'poster': thumb})
-            liStyle.setArt({'fanart': G.FANART_PATH})
-
-            directory.add({"mode": "cerca_la7", "play": video_link}, liStyle, folder=False)
-
-        # Paginazione in fondo
-        next_li = soup.find('li', class_='pager-next')
-        if next_li and next_li.find('a'):
-            next_url = G.URL_BASE + next_li.a.get('href').strip()
-            li_next = xbmcgui.ListItem(">> Pagina Successiva")
-            li_next.setArt({'fanart': G.FANART_PATH})
-            directory.add({"mode": "cerca_la7", "link": next_url}, li_next)
+        # the folder is opened before the site is asked: a failed search closes it
+        # with a failure, it does not leave Kodi waiting for an answer
+        answer = _search(query, page)
+        hits = [hit for hit in answer['hits'] if _listed(hit)]
+        for hit in hits:
+            params, item = _entry(hit)
+            # a program is a folder of its categories, a hit is something to watch
+            directory.add(params, item, folder=hit.get('contentType') == PROGRAM, unique=True)
+        if hits and page < answer['pages']:
+            directory.add({'mode': G.MODE, 'q': query, 'page': str(page + 1)}, items.next_page())
 
 
-def play_result(video_link):
-    """Play one result, and remember that a search is what brought the user there."""
-    xbmcgui.Window(10000).setProperty('la7_video_in_corso', '1')
-    streams.play_video(video_link, False)
+def play_result():
+    """Play the hit the user clicked."""
+    from resources.lib.playback import streams
+    streams.play_video(G.PLAY, False)
+
+
+def forget():
+    """Drop the remembered query: the next search asks for one."""
+    window.forget(MEMBER)
+
+
+def _search(query, page):
+    """The hits of one page of the site's answer, and how many pages there are."""
+    try:
+        answer = client.gql('siteSearch', {'q': query, 'limit': PAGE_SIZE, 'page': page})
+    except client.SiteError as cause:
+        raise AddonError(G.MODE, cause)
+    result = answer.get('siteSearch') or {}
+    size = int(result.get('pageSize') or PAGE_SIZE)
+    total = int(result.get('total') or 0)
+    return {'hits': [hit for group in result.get('groups') or [] for hit in group.get('hits') or []],
+            # the site answers totalPages=1 on the first page of every search and the
+            # real count from the second page on: what the user can page through is
+            # total over pageSize, which both answers agree on
+            'pages': -(-total // size)}
+
+
+def _listed(hit):
+    """True for the hits this add-on can do something with."""
+    return hit.get('contentType') in PLAYABLE + (PROGRAM,)
+
+
+def _entry(hit):
+    """The item of one hit, and the parameters a click on it carries."""
+    title = (hit.get('title') or '').strip()
+    path = (hit.get('url') or '').strip()
+    thumb = (hit.get('imageUrl') or '').strip()
+    plot = (hit.get('excerpt') or hit.get('propertyName') or '').strip()
+    if hit.get('contentType') == PROGRAM:
+        # a program is a folder of its categories, listed like any other program
+        return {'mode': 'tutti_programmi', 'link': G.URL_PLAY_BASE + path}, items.folder(title)
+    return {'mode': G.MODE, 'play': G.URL_PLAY_BASE + path, 'titolo': title,
+            'thumb': thumb, 'plot': plot}, items.entry(title, thumb, plot)

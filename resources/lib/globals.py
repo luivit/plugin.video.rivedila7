@@ -29,7 +29,6 @@ class GlobalVariables(object):
     URL_LIVE_LA7CINEMA = "https://www.la7.it/live-la7cinema"
     URL_RIVEDILA7 = "https://www.la7play.it/guida-tv-rivedi/la7"
     URL_RIVEDILA7CINEMA = "https://www.la7play.it/guida-tv-rivedi/la7-cinema"
-    URL_CERCA_LA7 = "https://www.la7.it/ricerca?query="
 
     # la7play.it answers with persisted GraphQL queries: the id of the query, not its
     # text, is part of the URL (re-read them from the site when one stops answering)
@@ -85,6 +84,7 @@ class GlobalVariables(object):
         self.THUMB = str(G.PARAMS.get("thumb", ""))
         self.PLOT = str(G.PARAMS.get("plot", ""))
         self.PLAY = str(G.PARAMS.get("play", ""))
+        self.QUERY = str(G.PARAMS.get("q", ""))
         self.PAGENUM = 0
 
         if self.IS_ADDON_FIRSTRUN:

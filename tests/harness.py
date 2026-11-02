@@ -32,6 +32,12 @@ LOGS = []       # every xbmc.log line, in the order the add-on wrote it
 CLOSED = False  # Kodi: after endOfDirectory, the directory is closed
 DROPPED = 0     # items Kodi would have discarded
 
+# Kodi keeps window properties across add-on calls, and a test scripts what the
+# user types: the two states the add-on can carry over from one call to the next
+WINDOW = {}
+TYPED = ''
+INPUTS = []   # every keyboard dialog a call opened, as the label it asked under
+
 # the day a smoke run asks the guide for: it lists the days that have aired, so the
 # newest day it can be asked about is yesterday
 YESTERDAY = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%d-%m-%Y')
@@ -51,6 +57,7 @@ SECTIONS = [
     ('tutti_programmi', {'link': 'https://www.la7play.it/otto-e-mezzo/video'}, 3),    # a listed category
     ('film', {}, 3),                                 # the grid of the film hub
     ('documentari', {}, 3),                          # the carousels of the documentary hub
+    ('cerca_la7', {'q': 'manovra'}, 3),              # the site's own search
 ]
 
 
@@ -104,7 +111,8 @@ class Dialog(object):
         return False
 
     def input(self, heading, default='', **kw):
-        return ''
+        INPUTS.append(heading)
+        return TYPED
 
     def select(self, heading, options, **kw):
         return -1
@@ -198,11 +206,11 @@ def install_stubs():
     xbmcgui.Dialog = Dialog
     xbmcgui.DialogProgress = Dialog
     xbmcgui.Window = type('Window', (object,), {
-        '_p': {},
+        '_p': WINDOW,
         '__init__': lambda self, wid=10000: None,
-        'setProperty': lambda self, k, v: None,
-        'getProperty': lambda self, k: '',
-        'clearProperty': lambda self, k: None})
+        'setProperty': lambda self, k, v: WINDOW.__setitem__(k, v),
+        'getProperty': lambda self, k: WINDOW.get(k, ''),
+        'clearProperty': lambda self, k: WINDOW.pop(k, None)})
     xbmcgui.INPUT_ALPHANUM = 0
     xbmcgui.NOTIFICATION_INFO = 'info'
     xbmcgui.NOTIFICATION_ERROR = 'error'
@@ -237,13 +245,9 @@ def install_stubs():
                                                    'post': requests.post})
     requests.exceptions = types.SimpleNamespace(RequestException=OSError)
 
-    bs4 = types.ModuleType('bs4')
-    bs4.BeautifulSoup = lambda *a, **k: types.SimpleNamespace(
-        find=lambda *a, **k: None, find_all=lambda *a, **k: [], select=lambda *a, **k: [])
-
     for name, module in (('xbmc', xbmc), ('xbmcgui', xbmcgui), ('xbmcplugin', xbmcplugin),
                          ('xbmcaddon', xbmcaddon), ('inputstreamhelper', helper),
-                         ('requests', requests), ('bs4', bs4)):
+                         ('requests', requests)):
         sys.modules[name] = module
 
     CLOSED = False
@@ -276,6 +280,7 @@ def run_addon(query, argv_handle='1', prepare=None):
     del ITEMS[:]
     del RESOLVED[:]
     del DIALOGS[:]
+    del INPUTS[:]
 
     if ROOT not in sys.path:
         sys.path.insert(0, ROOT)

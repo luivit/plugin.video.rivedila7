@@ -12,7 +12,6 @@ go through a Directory, and a failure leaves as an AddonError naming the section
 
 import os
 
-import xbmcgui
 import xbmcplugin
 
 from resources.lib.globals import G
@@ -43,8 +42,6 @@ ROOT_MENU = (
 
 def show_root_menu():
     """The root menu: the eight sections of the add-on, nothing else."""
-    xbmcgui.Window(10000).clearProperty('la7_search_url')
-
     with Directory() as directory:
         for mode, label, art, folder, live in ROOT_MENU:
             directory.add({'mode': mode}, _item(label, art, bold=True),
@@ -145,27 +142,14 @@ def _programs(directory, rows):
 
 def _program_item(row, title):
     """A program as a folder: its title, its image and the site's own synopsis."""
-    item = xbmcgui.ListItem(title, offscreen=True)
-    art = {'fanart': G.FANART_PATH}
-    image = _image(row)
-    if image:
-        art['thumb'] = image
-    item.setArt(art)
-    plot = (row.get('occhiello') or '').strip()
-    if plot:
-        item.setInfo('video', {'plot': plot})
-    return item
+    return items.entry(title, _image(row), (row.get('occhiello') or '').strip())
 
 
 def _item(label, art=None, bold=False):
     """One menu entry: a label and an image of the add-on, nothing else."""
     text = G.LANGUAGE(label) if isinstance(label, int) else label
-    item = xbmcgui.ListItem('[B]%s[/B]' % text if bold else text, offscreen=True)
-    pictures = {'fanart': G.FANART_PATH}
-    if art:
-        pictures['thumb'] = os.path.join(G.THUMB_PATH, art)
-    item.setArt(pictures)
-    return item
+    return items.entry('[B]%s[/B]' % text if bold else text,
+                       os.path.join(G.THUMB_PATH, art) if art else '')
 
 
 def _image(row):

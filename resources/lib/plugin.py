@@ -75,9 +75,15 @@ def tutti_programmi():
 def cerca_la7():
     """The site's search, or one of its results."""
     if G.PLAY:
-        search.play_result(G.PLAY)
+        search.play_result()
     else:
         search.cerca_la7()
+
+
+def root_menu():
+    """The root menu, where a new search starts: the remembered one is dropped."""
+    search.forget()
+    catalog.show_root_menu()
 
 
 # which function serves which mode: the root menu and this table are one thing
@@ -95,7 +101,7 @@ MODES = {
 
 def dispatch():
     """Serve the mode Kodi asked for; an empty mode is the root menu."""
-    MODES.get(G.MODE, catalog.show_root_menu)()
+    MODES.get(G.MODE, root_menu)()
 
 
 def run(argv):
