@@ -23,11 +23,6 @@ class AddonError(Exception):
         self.cause = cause
 
 
-def show(message):
-    """One dialog with the add-on name as heading."""
-    xbmcgui.Dialog().ok(G.PLUGIN_NAME, message)
-
-
 def notify(message):
     """A short, non-blocking message (used where a dialog would be an interruption)."""
     xbmcgui.Dialog().notification(G.PLUGIN_NAME, message,
@@ -40,6 +35,6 @@ def ask(label):
 
 
 def report(error):
-    """Log an AddonError and tell the user, once."""
+    """Log an AddonError and tell the user, once: the only error dialog there is."""
     xbmc.log('RivediLA7: %s' % error, xbmc.LOGERROR)
-    show(G.LANGUAGE(32005))
+    xbmcgui.Dialog().ok(G.PLUGIN_NAME, G.LANGUAGE(32005))

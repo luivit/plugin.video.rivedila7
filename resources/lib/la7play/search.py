@@ -55,7 +55,7 @@ def cerca_la7():
 def play_result():
     """Play the hit the user clicked."""
     from resources.lib.playback import streams
-    streams.play_video(G.PLAY, False)
+    streams.play_video(G.PLAY)
 
 
 def forget():

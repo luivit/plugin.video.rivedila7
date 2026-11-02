@@ -1,106 +1,77 @@
-"""DASH + Widevine: the token header, the license request, the play item.
+"""DASH and Widevine: the license the Conax server wants, and the item that plays it.
 
-This is the one path that cannot be verified on a Linux Kodi (no Widevine), so it
-stays as small as it can: build the license URL, ask inputstream.adaptive to
-play the manifest, and say so when it cannot.
+The add-on cannot test this path on a desktop Kodi (there is no Widevine there), so
+it stays as small and as literal as the player configuration allows: ask the token
+endpoint for a pre-authorization token, hand inputstream.adaptive the manifest
+together with the license URL and the header that token belongs in, and stop.
+
+Two kinds of stream arrive here and they differ only in the token: a live channel
+is a fixed manifest with a fixed content id, an on-demand episode asks for its own.
 """
 
-import re
-import sys
 import time
-
-from urllib.request import Request, urlopen
 
 import inputstreamhelper
 import requests
 
-import xbmc
-import xbmcgui
-import xbmcplugin
-
 from resources.lib.globals import G
-from resources.lib.kodi.directory import Directory
+from resources.lib.kodi import player
+from resources.lib.kodi.dialogs import AddonError
+
+# what the player needs to open a Widevine stream, and nothing else
+PLAYER = 'inputstream.adaptive'
+
+# the token the license server expects, then where it goes
+TOKEN_HEADER = 'preAuthorization'
+
+# how long the token request may take, in seconds: the token expires by itself
+TIMEOUT = 10
 
 
-def play_dirette(url, live):
-    xbmc.log('PLAY DIRETTE', xbmc.LOGINFO)
-    #xbmc.log('PAGE DIRETTE-----: '+str(url),xbmc.LOGINFO)
+def play_live(channel):
+    """Play one of the live channels: a fixed manifest, a token for its content id."""
+    live = G.LIVE[channel]
+    play(live['manifest'], token_url('LIVE', live['content_id']), G.LANGUAGE(live['label']))
 
-    url_title = ''
-    regex5 = ''
-    titolo_diretta = ''
 
-    if live:
-        if url == G.URL_LIVE_LA7:
-            url_title = G.URL_BASE
-            regex5 = r'var orainonda = ".*\t(.*?)"'
-        elif url == G.URL_LIVE_LA7CINEMA:
-            url_title = G.URL_BASE
-            regex5 = r'var orainondala7d = ".*\t(.*?)"'
-        #xbmc.log('URL TITLE-----: '+str(url_title),xbmc.LOGINFO)
-
-        req = Request(url_title, headers={'user-agent': G.HEADERS_SET['user-agent']})
-        page = urlopen(req).read()
-        html = page.decode(errors='replace')
-        #xbmc.log('REGEX5-----: '+str(re.findall(regex5, html)),xbmc.LOGINFO)
-
-        titolo_diretta = re.findall(regex5, html)[0]
-        #xbmc.log('TITOLO DIRETTA-----: '+str(titolo_diretta),xbmc.LOGINFO)
-
-    response = requests.get(url, headers={'user-agent': G.HEADERS_SET['user-agent']}, verify=False).content.decode()
+def play(manifest, token_url, title='', plot=''):
+    """Play one Widevine protected DASH stream: the manifest, and a token to ask for."""
     try:
-        preurl = re.findall('preTokenUrl = "(.+?)"', response)[0]
-    except Exception as e:
-        e = sys.exc_info()[0]
-        xbmc.log('EXCEP PREURL: ' + str(e), xbmc.LOGINFO)
-        Directory().fail()
-        return
-    response = response.replace("\'", '"')
+        pre_auth_token = _token(token_url)
+    except (OSError, KeyError, ValueError) as cause:
+        # the license is the stream: without the token there is nothing to play
+        raise AddonError(G.MODE, cause)
+    helper = inputstreamhelper.Helper(G.DRM_PROTOCOL, drm=G.DRM)
+    if not helper.check_inputstream():
+        raise AddonError(G.MODE, OSError('inputstream.adaptive cannot play Widevine'))
+    player.resolve(manifest, title, plot,
+                   properties={'inputstream': helper.inputstream_addon,
+                               'inputstream.adaptive.manifest_type': G.DRM_PROTOCOL,
+                               'inputstream.adaptive.license_type': G.DRM,
+                               'inputstream.adaptive.license_key': _license(pre_auth_token)},
+                   mime='application/dash+xml')
 
-    mpdurl = re.findall('dash.+?"(.+?)"', response, re.DOTALL)[0]
-    #xbmc.log('URL VIDEO MPD-----: '+str(mpdurl),xbmc.LOGINFO)
 
-    headers_tok = {
-        'host': G.HEADERS_SET['host_token'],
-        'user-agent': G.HEADERS_SET['user-agent'],
-        'accept': G.HEADERS_SET['accept'],
-        'accept-language': G.HEADERS_SET['accept-language'],
-        'dnt': G.HEADERS_SET['dnt'],
-        'te': G.HEADERS_SET['te'],
-        'origin': G.HEADERS_SET['origin'],
-        'referer': G.HEADERS_SET['referer'],
-    }
-    response = requests.get(preurl, headers=headers_tok, verify=False).json()
-    pre_auth_token = response['preAuthToken']
+def token_url(kind, content_id):
+    """The pre-authorization token URL the player asks for a stream of this kind."""
+    return '%s?id=%s&contentType=%s&v=%d' % (G.URL_DRM_TOKEN, content_id, kind,
+                                             int(time.time() * 1000))
 
-    headers_lic = {
-        'host': G.HEADERS_SET['host_license'],
-        'user-agent': G.HEADERS_SET['user-agent'],
-        'accept': G.HEADERS_SET['accept'],
-        'accept-language': G.HEADERS_SET['accept-language'],
-        'preAuthorization': pre_auth_token,
-        'origin': G.HEADERS_SET['origin'],
-        'referer': G.HEADERS_SET['referer'],
-    }
-    pre_lic = '&'.join(['%s=%s' % (name, value) for (name, value) in headers_lic.items()])
-    # xbmc.log('LICENSE1------: '+str(pre_lic),xbmc.LOGINFO)
 
-    tsatmp = str(int(time.time()))
-    license_url = G.KEY_WIDEVINE + '?d=%s' % tsatmp
-    lic_url = '%s|%s|R{SSM}|' % (license_url, pre_lic)
-    # xbmc.log('LICENSE2------: '+str(lic_url),xbmc.LOGINFO)
-    is_helper = inputstreamhelper.Helper(G.DRM_PROTOCOL, drm=G.DRM)
-    if is_helper.check_inputstream():
-        listitem = xbmcgui.ListItem(offscreen=True)
-        listitem.setPath(mpdurl)
-        if live:
-            # listitem.setLabel(titolo_diretta)
-            listitem.setInfo('video', {'plot': titolo_diretta, 'title': titolo_diretta})
-        listitem.setProperty("inputstream", is_helper.inputstream_addon)
-        listitem.setProperty("inputstream.adaptive.manifest_type", G.DRM_PROTOCOL)
-        listitem.setProperty("inputstream.adaptive.license_type", G.DRM)
-        listitem.setProperty("inputstream.adaptive.license_key", lic_url)
-        listitem.setMimeType('application/dash+xml')
-        xbmcplugin.setResolvedUrl(G.PLUGIN_HANDLE, True, listitem)
-    else:
-        Directory().fail()
+def _token(url):
+    """The pre-authorization token the license server wants for one stream."""
+    # no 'host' header: the endpoint derives it from its own URL, and a wrong one
+    # makes it answer with an empty body
+    headers = {name: value for name, value in G.HEADERS_SET.items() if name != 'host_license'}
+    return requests.get(url, headers=headers, timeout=TIMEOUT, verify=False).json()['preAuthToken']
+
+
+def _license(pre_auth_token):
+    """The license key inputstream.adaptive takes: URL, headers, and the challenge."""
+    headers = {'host': G.HEADERS_SET['host_license'],
+               TOKEN_HEADER: pre_auth_token,
+               'user-agent': G.HEADERS_SET['user-agent'],
+               'origin': G.HEADERS_SET['origin'],
+               'referer': G.HEADERS_SET['referer']}
+    handshake = '&'.join('%s=%s' % (name, value) for name, value in headers.items())
+    return '%s?d=%d|%s|R{SSM}|' % (G.KEY_WIDEVINE, int(time.time()), handshake)

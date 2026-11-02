@@ -24,11 +24,25 @@ class GlobalVariables(object):
     # the scrapers in this release replace, one section at a time
     URL_PLAY_BASE = "https://www.la7play.it"
 
-    URL_BASE = "https://www.la7.it"
-    URL_LIVE_LA7 = "https://www.la7.it/dirette-tv"
-    URL_LIVE_LA7CINEMA = "https://www.la7.it/live-la7cinema"
     URL_RIVEDILA7 = "https://www.la7play.it/guida-tv-rivedi/la7"
     URL_RIVEDILA7CINEMA = "https://www.la7play.it/guida-tv-rivedi/la7-cinema"
+
+    # playback: the CDNs the site's own player uses, and the token endpoint that lets
+    # the DRM CDN answer. All four addresses verified on 2026-11-02: the manifest of
+    # an episode, the playlist of a clear one, and both live manifests answer 200
+    URL_CDN_VOD = "https://awsvodpkg.iltrovatore.it"
+    URL_CDN_DRM = "https://d3iki3eydrtvsa.cloudfront.net"
+    URL_CDN_LIVE = "https://d15umi5iaezxgx.cloudfront.net"
+    URL_DRM_TOKEN = "https://svc-01.la7play.it/DRM/tk.php"
+    DRM_CONTENT_ID = "667"      # the content id the token endpoint knows a VOD by
+
+    # the two live channels: a fixed manifest, and the content id its token asks for
+    LIVE = {
+        'la7': {'manifest': URL_CDN_LIVE + '/LA7/DRM/DASH/Live.mpd',
+                'content_id': '1', 'label': 32002},
+        'la7cinema': {'manifest': URL_CDN_LIVE + '/LA7D/DRM/DASH/Live.mpd',
+                      'content_id': '2', 'label': 32009},
+    }
 
     # la7play.it answers with persisted GraphQL queries: the id of the query, not its
     # text, is part of the URL (re-read them from the site when one stops answering)

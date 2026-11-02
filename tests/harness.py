@@ -234,6 +234,8 @@ def install_stubs():
 
     helper = types.ModuleType('inputstreamhelper')
     helper.Helper = type('Helper', (object,), {
+        'inputstream_addon': 'inputstream.adaptive',
+        '__init__': lambda self, *a, **k: None,
         'check_inputstream': lambda self, *a, **k: True,
         'install_inputstream': lambda self, *a, **k: True,
         'install_widevine': lambda self, *a, **k: True})

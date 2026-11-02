@@ -1,72 +1,84 @@
-"""One episode page becomes one stream: clear HLS when the page publishes it,
-a DRM session when it does not.
+"""One episode, one stream: the page says which, and the add-on only asks.
+
+Since the restyling, an episode page carries its player data in the page payload as
+`videoData`: the same node the listings show, with the fields that say how to play
+it. Three answers are possible, and each has one way to play it:
+
+* a plain URL (`urlVideo`) - play it as it is;
+* a DRM protected node (`drm`) - its `uploadVideo.cf_remote_url` names the stream on
+  the DRM CDN, and `drm.py` plays it with the license the Conax server wants;
+* a clear node - the CDN builds an HLS playlist out of the progressive renditions
+  the node publishes, and Kodi plays that playlist itself.
+
+Nothing here scrapes markup or guesses a CDN path from a regex over the HTML: the
+page's own data says what the stream is, and a page that does not say it fails with
+the usual one dialog instead of playing something else.
 """
 
-import re
-
-from urllib.request import Request, urlopen
-
-import xbmc
-import xbmcgui
-import xbmcplugin
-
 from resources.lib.globals import G
-from resources.lib.kodi import dialogs
+from resources.lib.kodi import player
+from resources.lib.kodi.dialogs import AddonError
+from resources.lib.la7play import client, payload
 from resources.lib.playback import drm
 
+# where a node's DRM stream and its clear renditions live
+DRM_PATH = '/%s/DASH/%s.mpd'
+CLEAR_PATH = '/local/hls/,%s,.mp4.urlset/master.m3u8'
 
-def play_video(page_video, live):
-    xbmc.log('PLAY VIDEO', xbmc.LOGINFO)
-    #xbmc.log('PAGE VIDEO-----: '+str(page_video),xbmc.LOGINFO)
+# the key the episode page keeps its player data under
+VIDEO = 'videoData'
 
-    # regex1 = 'vS = "(.*?)"'
-    regex2 = r'\.net/i/.*?content/(.*?)(?:\.mp4)'
-    regex3 = 'm3u8: "(.*?)"'
-    # regex4 = '  <iframe src="(.*?)"'
 
-    req = Request(page_video, headers={'user-agent': G.HEADERS_SET['user-agent']})
-    page = urlopen(req).read()
-    html = page.decode('utf-8', errors='ignore')
-    if live:
+def play_video(page):
+    """Play the stream a page of the site publishes."""
+    node = _video(page)
+    manifest, content_id = _stream(node)
+    if content_id:
+        drm.play(manifest, drm.token_url('VOD', content_id))
         return
-        # if re.findall(regex1, html):
-        # xbmc.log('REGEX1-----: '+str(re.findall(regex1, html)),xbmc.LOGINFO)
-        #     link_video = re.findall(regex1, html)[0]
-    else:
-        if re.findall(regex2, html):
-            # xbmc.log('REGEX2-----: '+str(re.findall(regex2, html)),xbmc.LOGINFO)
-            link_video = 'https://awsvodpkg.iltrovatore.it/local/hls/,/content/' + re.findall(regex2, html)[0] + '.mp4.urlset/master.m3u8'
-            # xbmc.log('LINK2-----: '+str(link_video),xbmc.LOGINFO)
-        # elif re.findall(regex5, html) or re.findall(regex5, html):
-        #     xbmc.log('REGEX5-----: '+str(re.findall(regex5, html)),xbmc.LOGINFO)
-        #     link_video = 'https://awsvodpkg.iltrovatore.it/local/hls/,/content/' + re.findall(regex5, html)[0] + '_1.mp4.urlset/master.m3u8'
-        #     xbmc.log('LINK5-----: '+str(link_video),xbmc.LOGINFO)
-        elif re.findall(regex3, html):
-            # xbmc.log('REGEX3-----: '+str(re.findall(regex3, html)),xbmc.LOGINFO)
-            link_video = re.findall(regex3, html)[0]
-            # xbmc.log('LINK3-----: '+str(link_video),xbmc.LOGINFO)
-        # video .mp4 dal Cerca
-        elif re.findall(r'mp4["\']?\s*:\s*["\'](https?://[^"\']+\.mp4)["\']', html):
-            link_video = re.findall(r'mp4["\']?\s*:\s*["\'](https?://[^"\']+\.mp4)["\']', html)[0]
+    player.resolve(manifest)
 
-        else:
-            # xbmc.log('DECODIFICA DRM',xbmc.LOGINFO)
-            drm.play_dirette(page_video, False)
-            return
 
-    listitem = xbmcgui.ListItem(G.TITOLO, offscreen=True)
-    listitem.setInfo('video', {'Title': G.TITOLO})
-    if G.THUMB != "":
-        listitem.setArt({'thumb': G.THUMB})
-    listitem.setInfo('video', {'plot': G.PLOT})
-    if link_video == '':
-        xbmc.log('RivediLA7: NO VIDEO LINK', xbmc.LOGINFO)
-        dialogs.show(G.LANGUAGE(32005))
-        xbmcplugin.setResolvedUrl(G.PLUGIN_HANDLE, False, listitem)
-        return
-    if '.m3u8' in link_video:
-        listitem.setProperty('inputstream', 'inputstream.adaptive')
-        listitem.setProperty('inputstream.adaptive.manifest_type', 'hls')
+def _video(page):
+    """The player data one page publishes, as the node that describes the stream."""
+    try:
+        text = payload.decode(client.fetch_html(page))
+    except client.SiteError as cause:
+        raise AddonError(G.MODE, cause)
+    node = payload.value(text, VIDEO)
+    if not isinstance(node, dict) or not node:
+        raise AddonError(G.MODE, LookupError('%s publishes no video data' % page))
+    return node
 
-    listitem.setPath(link_video)
-    xbmcplugin.setResolvedUrl(G.PLUGIN_HANDLE, True, listitem)
+
+def _stream(node):
+    """The manifest of a node, and the content id its license needs, if any."""
+    if node.get('urlVideo'):
+        return node['urlVideo'], None
+    upload = node.get('uploadVideo') or {}
+    remote = (upload.get('cf_remote_url') or '').strip()
+    if not remote:
+        raise AddonError(G.MODE, LookupError('%s publishes no stream' % payload.node_path(node)))
+    if node.get('drm'):
+        # encrypted content is one DASH stream on the DRM CDN, named after its entry
+        name = remote.strip('/').split('/')[-1].replace('.mp4', '')
+        return G.URL_CDN_DRM + DRM_PATH % (name, name), node.get('drmContentId') or G.DRM_CONTENT_ID
+    # clear content is a list of progressive renditions the CDN turns into HLS
+    return G.URL_CDN_VOD + CLEAR_PATH % _renditions(remote, upload.get('cf_old_entry_id')), None
+
+
+def _renditions(remote, old_entry):
+    """The rendition paths of a node, in the form the CDN's HLS endpoint expects."""
+    paths = remote.replace('.mp4', '')
+    if old_entry:
+        # an old entry is published with its paths already rooted
+        return paths if paths.startswith('/') else '/' + paths
+    entries = []
+    for entry in paths.split(','):
+        entry = entry.strip()
+        if entry and not entry.startswith('/'):
+            entry = '/' + entry
+        if entry and not entry.startswith('/nk/'):
+            entry = '/nk' + entry
+        entries.append(entry)
+    return ','.join(entries)
