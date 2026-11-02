@@ -20,6 +20,9 @@ What is saved:
                           three days of three programs (the real page carries
                           fifteen days and 300+ programs, 700 kB of fixture for
                           the same shapes)
+    page-categoria.html   /otto-e-mezzo/puntate, same, whole: the fourteen replays
+                          of a category are the cards of the page, and a card is
+                          a component reference of its own
     gql-nodePage.json     the answer of the nodePage query for "otto-e-mezzo"
     gql-allPrograms.json  the flat index of programs behind the programs page
     gql-nsContentHub-programmi.json
@@ -53,6 +56,7 @@ QUERIES = {
 FIXTURES = [
     # file, kind, what, trimming
     ('page-programma.html', 'page', SITE + '/otto-e-mezzo', None),
+    ('page-categoria.html', 'page', SITE + '/otto-e-mezzo/puntate', None),
     ('page-guida-la7.html', 'page', SITE + '/guida-tv-rivedi/la7',
      {'key': 'giorno', 'days': 3, 'programs': 3}),
     ('gql-nodePage.json', 'gql', {'query': 'nodePage', 'variables': {'path': 'otto-e-mezzo'}}, None),

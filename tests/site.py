@@ -39,7 +39,9 @@ class Site(object):
         self.asked.append(request.full_url)
         if self.error is not None:
             raise self.error
-        for match, body in self.answers.items():
-            if match in request.full_url:
-                return Answer(body)
-        raise AssertionError('a request this test did not expect: %s' % request.full_url)
+        # the longest key that matches wins, so a test can answer one page of a
+        # listing apart from the listing itself
+        matches = [match for match in self.answers if match in request.full_url]
+        if not matches:
+            raise AssertionError('a request this test did not expect: %s' % request.full_url)
+        return Answer(self.answers[max(matches, key=len)])

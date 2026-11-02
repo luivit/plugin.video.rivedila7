@@ -46,6 +46,8 @@ SECTIONS = [
     ('rivedi_la7', {}, 3),                           # the days of the guide
     ('rivedi_la7cinema', {}, 3),
     ('rivedi_la7', {'giorno': YESTERDAY}, 3),        # the replays of a day
+    ('tutti_programmi', {'link': 'https://www.la7play.it/otto-e-mezzo'}, 3),          # a program page
+    ('tutti_programmi', {'link': 'https://www.la7play.it/otto-e-mezzo/puntate'}, 3),  # a category of one
 ]
 
 

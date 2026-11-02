@@ -47,7 +47,7 @@ def tutti_programmi():
     if G.PLAY:
         streams.play_video(G.PLAY, False)
     elif G.LINK:
-        program.video_programma()
+        program.pagina()
     elif G.GRUPPO:
         catalog.gruppo(G.GRUPPO)
     elif G.LETTERA:

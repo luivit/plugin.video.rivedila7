@@ -3,8 +3,8 @@
 The fixture is the guide of LA7 as the site serves it (see
 tests/fixtures/capture.py), cut to three days of three programs: the shapes are the
 site's, the size is not. The guide is also the only place a program's week exists -
-its page publishes no episode list - so `repliche` is tested here too, before the
-program pages that call it exist.
+its page publishes no episode list - so `repliche` is tested here, with the folder
+the program page would have open.
 """
 
 import json
@@ -73,6 +73,12 @@ class GuideTest(unittest.TestCase):
     def params(item):
         return dict(urllib.parse.parse_qsl(urllib.parse.urlparse(item['url']).query))
 
+    def week(self, pathname):
+        """A program's week, into the folder the program page has open."""
+        from resources.lib.kodi.directory import Directory
+        with Directory(content='episodes') as directory:
+            return self.program.repliche(directory, pathname)
+
     def test_the_guide_offers_its_days_newest_first(self):
         self.entering()
         self.program.giorni('rivedila7.jpg')
@@ -140,7 +146,7 @@ class GuideTest(unittest.TestCase):
 
     def test_a_programs_week_is_the_guide_filtered_on_its_own_path(self):
         self.entering()
-        added = self.program.repliche('/omnibus')
+        added = self.week('/omnibus')
         self.assertEqual(added, 3)
         self.assertEqual([item['label'] for item in harness.ITEMS],
                          ['martedi 27 ottobre Omnibus ST.27',
@@ -153,18 +159,18 @@ class GuideTest(unittest.TestCase):
     def test_a_day_listed_by_both_guides_is_one_replay(self):
         self.entering()
         # both channels answered with the same guide: the week must not double it
-        self.assertEqual(self.program.repliche('/omnibus-meteo'), 3)
+        self.assertEqual(self.week('/omnibus-meteo'), 3)
         self.assertEqual(len(harness.ITEMS), 3)
 
     def test_a_program_whose_name_starts_the_same_takes_no_replay(self):
         self.entering()
-        self.assertEqual(self.program.repliche('/omni'), 0)
+        self.assertEqual(self.week('/omni'), 0)
         self.assertEqual(harness.ITEMS, [])
         self.assertEqual(harness.ENDINGS, [{'succeeded': True}])
 
     def test_a_programs_week_that_the_guide_does_not_cover_is_empty(self):
         self.entering()
-        self.assertEqual(self.program.repliche('/propaganda-live'), 0)
+        self.assertEqual(self.week('/propaganda-live'), 0)
 
     def test_a_day_is_named_the_way_the_guide_names_it(self):
         self.assertEqual(self.program.giorno_label('25-10-2026'), 'domenica 25 ottobre')

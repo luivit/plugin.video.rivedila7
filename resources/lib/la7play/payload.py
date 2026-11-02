@@ -13,6 +13,9 @@ Two ways of reading it, because the site uses two:
 * `nodes()` walks an already decoded structure and collects the content nodes in
   it, wherever they are nested (a hub page keeps its content in slots).
 
+A third reader, `page_nodes()`, reads a whole page: the cards of a listing are not
+nested under one key, so that one listing cannot be read by name.
+
 What a node is, and how the add-on tells a folder from a playable item, is site
 knowledge and therefore lives here too: a node with a stream is an item, a node
 whose path has more than one segment is a category.
@@ -75,11 +78,34 @@ def nodes(content, found=None, seen=None):
     return found
 
 
+def page_nodes(html):
+    """The content nodes of one page, read from the payload text of that page.
+
+    A page does not carry its items under a key: every card of a list is a
+    component reference of its own, so this is the one place in the add-on that
+    reads the flight text line by line instead of by name. It exists for the one
+    listing no query answers - the cards of a category page - and is used by the
+    fallback of the archive, not by the sections that read data.
+    """
+    found = []
+    seen = set()
+    for line in decode(html).split('\n'):
+        _, _, body = line.partition(':')
+        try:
+            content = json.loads(body)
+        except ValueError:
+            continue
+        for node in nodes(content):
+            path = node_path(node)
+            if path not in seen:
+                seen.add(path)
+                found.append(node)
+    return found
+
+
 def node_path(node):
     """The path of a node on the site, empty when it has none."""
     return node.get('path') or node.get('pathname') or ''
-
-
 def node_title(node):
     """The title of a node, stripped; the site spells it three ways."""
     return (node.get('titolo') or node.get('title') or node.get('nome') or '').strip()
