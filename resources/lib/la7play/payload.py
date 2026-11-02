@@ -111,6 +111,28 @@ def node_title(node):
     return (node.get('titolo') or node.get('title') or node.get('nome') or '').strip()
 
 
+def node_thumb(node):
+    """The picture of a node: its scene when it has one, its cover after that."""
+    upload = node.get('uploadVideo') or {}
+    for image in (upload.get('cf_thumbnail_url'), node.get('smartTvLocandina'),
+                  node.get('coverImage'), node.get('scenaImage'),
+                  node.get('smartTvAnteprima'), node.get('programmaImage')):
+        url = _url(image)
+        if url:
+            return url
+    return ''
+
+
+def node_plot(node):
+    """The text a node publishes about itself, wherever the site keeps it."""
+    for text in (_text(node.get('body')), _text(node.get('description')),
+                 _text(node.get('sinossi')), _text(node.get('sinossibreve')),
+                 _text(node.get('intro'))):
+        if text:
+            return text
+    return ''
+
+
 def is_playable(node):
     """True when the node is something the player can open.
 
@@ -135,6 +157,24 @@ def is_ancestor(path, pathname):
     """True when `path` is `pathname` itself or one of its parents."""
     path = path.rstrip('/')
     return bool(path) and (pathname == path or pathname.startswith(path + '/'))
+
+
+def _url(image):
+    """The URL of a picture, which the site gives as a string or as a structure."""
+    if isinstance(image, str):
+        return image
+    if isinstance(image, dict):
+        return _url(image.get('url'))
+    return ''
+
+
+def _text(value):
+    """The string of a text, which the site keeps as plain text or as HTML."""
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, dict):
+        return _text(value.get('plainValue') or value.get('value'))
+    return ''
 
 
 def _bracketed(text, start):

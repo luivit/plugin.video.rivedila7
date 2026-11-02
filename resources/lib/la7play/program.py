@@ -20,9 +20,8 @@ failure named by the section that failed.
 import datetime
 import os
 
-import xbmcgui
-
 from resources.lib.globals import G
+from resources.lib.kodi import items
 from resources.lib.kodi.dialogs import AddonError
 from resources.lib.kodi.directory import Directory
 from resources.lib.la7play import archive, client, payload
@@ -40,7 +39,7 @@ def giorni(thumb):
             # a guide with nothing to replay is not a folder: it is a failure to report
             raise AddonError(G.MODE, LookupError('the guide publishes no replay'))
         for day in reversed(days):
-            item = xbmcgui.ListItem(giorno_label(day['data']), offscreen=True)
+            item = items.folder(giorno_label(day['data']))
             item.setArt({'thumb': os.path.join(G.THUMB_PATH, thumb), 'fanart': G.FANART_PATH})
             directory.add({'mode': G.MODE, 'giorno': day['data']}, item)
 
@@ -128,7 +127,7 @@ def _program(directory, pathname):
     categories = sezioni(pathname)
     for category in categories:
         directory.add({'mode': G.MODE, 'link': G.URL_PLAY_BASE + category['path']},
-                      _folder(category['label']))
+                      items.folder(category['label']))
     if not replays and not categories:
         # a page with nothing to open is a failure to report, not an empty folder
         # to walk into
@@ -147,7 +146,7 @@ def _items(directory, pathname):
     if more:
         # only a listing pages: an archive is one query, read whole
         directory.add({'mode': G.MODE, 'link': G.URL_PLAY_BASE + pathname,
-                       'page': str(page + 1)}, _next_page())
+                       'page': str(page + 1)}, items.next_page())
 
 
 def _categoria(pathname, voce):
@@ -208,84 +207,19 @@ def _title(programma):
 
 
 def _episode(programma, label):
-    """One replay: the item Kodi shows, and where a click on it goes."""
+    """One replay of the guide: the item Kodi shows, and where a click on it goes."""
     thumb = programma.get('immagine_programma') or programma.get('immagine_scena') or ''
     plot = (programma.get('sinossi') or '').strip()
-    item = xbmcgui.ListItem(label, offscreen=True)
-    art = {'fanart': G.FANART_PATH}
-    if thumb:
-        art['thumb'] = thumb
-    item.setArt(art)
-    item.setInfo('video', {'plot': plot})
     params = {'mode': G.MODE, 'play': G.URL_PLAY_BASE + _path(programma),
               'titolo': _title(programma), 'thumb': thumb, 'plot': plot}
-    return params, item
+    return params, items.entry(label, thumb, plot)
 
 
 def _node(node):
     """One item of a category: the item Kodi shows, and what a click on it opens."""
     title = payload.node_title(node)
-    thumb = _cover(node)
-    plot = _plot(node)
-    item = xbmcgui.ListItem(title, offscreen=True)
-    art = {'fanart': G.FANART_PATH}
-    if thumb:
-        art['thumb'] = thumb
-    item.setArt(art)
-    if plot:
-        item.setInfo('video', {'plot': plot})
+    thumb = payload.node_thumb(node)
+    plot = payload.node_plot(node)
     params = {'mode': G.MODE, 'play': G.URL_PLAY_BASE + payload.node_path(node),
               'titolo': title, 'thumb': thumb, 'plot': plot}
-    return params, item
-
-
-def _folder(label):
-    """A category as Kodi shows it: a folder named the way the site names it."""
-    item = xbmcgui.ListItem(label, offscreen=True)
-    item.setArt({'fanart': G.FANART_PATH})
-    return item
-
-
-def _next_page():
-    """The item that opens the page after the one being listed."""
-    item = xbmcgui.ListItem('[B]' + G.LANGUAGE(32003) + '[/B]', offscreen=True)
-    item.setArt({'fanart': G.FANART_PATH})
-    return item
-
-
-def _cover(node):
-    """The picture of a category item: its scene first, whatever else after."""
-    upload = node.get('uploadVideo') or {}
-    for image in (upload.get('cf_thumbnail_url'), node.get('smartTvLocandina'),
-                  node.get('coverImage'), node.get('scenaImage'), node.get('programmaImage')):
-        url = _image(image)
-        if url:
-            return url
-    return ''
-
-
-def _plot(node):
-    """The text a category item publishes about itself, wherever it keeps it."""
-    for text in (_text(node.get('body')), _text(node.get('description')),
-                 _text(node.get('sinossi'))):
-        if text:
-            return text
-    return ''
-
-
-def _image(image):
-    """The URL of a picture, which the site gives as a string or as a structure."""
-    if isinstance(image, str):
-        return image
-    if isinstance(image, dict):
-        return _image(image.get('url'))
-    return ''
-
-
-def _text(value):
-    """The string of a text, which the site wraps as plain text or as HTML."""
-    if isinstance(value, str):
-        return value.strip()
-    if isinstance(value, dict):
-        return _text(value.get('plainValue') or value.get('value'))
-    return ''
+    return params, items.entry(title, thumb, plot)

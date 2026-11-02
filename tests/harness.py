@@ -49,6 +49,8 @@ SECTIONS = [
     ('tutti_programmi', {'link': 'https://www.la7play.it/otto-e-mezzo'}, 3),          # a program page
     ('tutti_programmi', {'link': 'https://www.la7play.it/otto-e-mezzo/puntate'}, 3),  # a category of one
     ('tutti_programmi', {'link': 'https://www.la7play.it/otto-e-mezzo/video'}, 3),    # a listed category
+    ('film', {}, 3),                                 # the grid of the film hub
+    ('documentari', {}, 3),                          # the carousels of the documentary hub
 ]
 
 

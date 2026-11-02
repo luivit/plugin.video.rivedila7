@@ -16,12 +16,17 @@ import xbmcgui
 import xbmcplugin
 
 from resources.lib.globals import G
+from resources.lib.kodi import items
 from resources.lib.kodi.dialogs import AddonError
 from resources.lib.kodi.directory import Directory
 from resources.lib.la7play import client, payload
 
 # the programs page of the site, a hub whose carousels are the groups of programs
 PROGRAMMI_HUB = '/programmi'
+
+# the two sections that are one hub page each: films and documentaries
+FILM_HUB = '/film'
+DOCUMENTARI_HUB = '/documentari'
 
 # the root menu in the order the add-on serves it: mode, label, art, folder, live
 ROOT_MENU = (
@@ -73,18 +78,42 @@ def tutti_programmi():
 
 
 def film():
-    """The film hub of the site; its listing arrives with the hub sections."""
-    raise AddonError('film', NotImplementedError('hub listing not ported yet'))
+    """The films the site's hub publishes, in the order it publishes them."""
+    _hubs('film', FILM_HUB)
 
 
 def documentari():
-    """The documentaries hub of the site; its listing arrives with the hub sections."""
-    raise AddonError('documentari', NotImplementedError('hub listing not ported yet'))
+    """The documentaries the site's hub publishes."""
+    _hubs('documentari', DOCUMENTARI_HUB)
 
 
 def gruppi():
     """The groups the programs page is organised in, in the page's own order."""
     return [slot['titoloCarrello'] for slot in _slots()]
+
+
+def _hubs(section, path):
+    """One section built on a content hub: the videos its page holds.
+
+    A hub carries its films in a grid and the few it recommends in a carousel, and a
+    film can be in both: the grid comes first, the repeats are dropped. The hub page
+    is itself a node of its own payload, and a section that opened itself would be a
+    folder leading back to where the user already is.
+    """
+    with Directory() as directory:
+        entity = _query(section, 'nsContentHub', {'path': path}).get('route') or {}
+        for node in payload.nodes(entity.get('entity') or {}):
+            node_path = payload.node_path(node)
+            if payload.is_ancestor(node_path, path) or not payload.is_playable(node):
+                continue
+            title = payload.node_title(node)
+            if not title:
+                continue
+            directory.add({'mode': G.MODE, 'play': G.URL_PLAY_BASE + node_path,
+                           'titolo': title, 'thumb': payload.node_thumb(node),
+                           'plot': payload.node_plot(node)},
+                          items.entry(title, payload.node_thumb(node), payload.node_plot(node)),
+                          folder=False, unique=True)
 
 
 def _slots():

@@ -33,6 +33,12 @@ What is saved:
                           the archive of one program: the shape of its answers and
                           the newest six of the hundred it gives (the whole answer
                           is 150 kB of the same node)
+    gql-nsContentHub-film.json
+                          the film hub: the first eight films of its grid and the
+                          eleven it recommends (three of them repeat the grid)
+    gql-nsContentHub-documentari.json
+                          the documentary hub: its three carousels and the one
+                          documentary it puts in evidence
 
 A page fixture is the payload of the page, re-encoded as a single push chunk: the
 site sends it in two or three chunks, which is a delivery detail `decode()` folds
@@ -68,6 +74,10 @@ FIXTURES = [
     ('gql-allPrograms.json', 'gql', {'query': 'allPrograms', 'variables': None}, None),
     ('gql-nsContentHub-programmi.json', 'gql',
      {'query': 'nsContentHub', 'variables': {'path': '/programmi'}}, {'slots': 3}),
+    ('gql-nsContentHub-film.json', 'gql',
+     {'query': 'nsContentHub', 'variables': {'path': '/film'}}, {'slots': 11, 'grid': 8}),
+    ('gql-nsContentHub-documentari.json', 'gql',
+     {'query': 'nsContentHub', 'variables': {'path': '/documentari'}}, {'slots': 11, 'grid': 0}),
     ('gql-filteredNodeReplicas.json', 'gql',
      {'query': 'filteredNodeReplicas', 'variables': {'path': 'Otto e mezzo', 'value': 100}},
      {'nodes': 6}),
@@ -172,14 +182,17 @@ def gql(query, variables=None):
     return urllib.request.urlopen(request, timeout=60).read().decode('utf-8', 'replace')
 
 
-def trim_slots(text, items):
-    """Keep every carousel of a hub page, and the first items of each."""
+def trim_hub(text, slots, grid):
+    """Keep a hub page's carousels whole and the first films of its grid."""
     answer = json.loads(text)
     route = (answer.get('data') or {}).get('route') or {}
-    for slot in (route.get('entity') or {}).get('contentSlots') or []:
+    entity = route.get('entity') or {}
+    if isinstance(entity.get('filmGrid'), list):
+        entity['filmGrid'] = entity['filmGrid'][:grid]
+    for slot in entity.get('contentSlots') or []:
         paginated = slot.get('paginatedItems') or {}
         if isinstance(paginated.get('items'), list):
-            paginated['items'] = paginated['items'][:items]
+            paginated['items'] = paginated['items'][:slots]
     return json.dumps(answer, separators=(',', ':'))
 
 
@@ -198,7 +211,7 @@ def build(kind, what, trimming):
         if not trimming:
             return body
         if 'slots' in trimming:
-            return trim_slots(body, trimming['slots'])
+            return trim_hub(body, trimming['slots'], trimming.get('grid', 0))
         return trim_nodes(body, trimming['nodes'])
     body = payload(fetch(what))
     if trimming:

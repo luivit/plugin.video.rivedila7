@@ -22,6 +22,22 @@ def diretta_la7cinema():
     drm.play_dirette(G.URL_LIVE_LA7CINEMA, True)
 
 
+def film():
+    """The films the site publishes: the section, or one film of it."""
+    if G.PLAY:
+        streams.play_video(G.PLAY, False)
+    else:
+        catalog.film()
+
+
+def documentari():
+    """The documentaries the site publishes: the section, or one of them."""
+    if G.PLAY:
+        streams.play_video(G.PLAY, False)
+    else:
+        catalog.documentari()
+
+
 def rivedi_la7():
     """LA7 replays: the days of its guide, one day of it, or one episode."""
     _replay('rivedila7.jpg')
@@ -70,8 +86,8 @@ MODES = {
     'diretta_la7cinema': diretta_la7cinema,
     'rivedi_la7': rivedi_la7,
     'rivedi_la7cinema': rivedi_la7cinema,
-    'film': catalog.film,
-    'documentari': catalog.documentari,
+    'film': film,
+    'documentari': documentari,
     'tutti_programmi': tutti_programmi,
     'cerca_la7': cerca_la7,
 }

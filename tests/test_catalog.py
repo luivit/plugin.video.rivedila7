@@ -56,6 +56,12 @@ class CatalogTest(unittest.TestCase):
                 all_programs(rows) if rows is not None else fixture('gql-allPrograms.json'))
         self.client.urlopen = self.site
 
+    def serving_hub(self, name):
+        """Answer the hub query of one section with the answer the site gave."""
+        self.serve()
+        self.site.answers[self.client.query_url('nsContentHub', {'path': '/' + name})] = (
+            fixture('gql-nsContentHub-%s.json' % name))
+
     def entering(self, mode='tutti_programmi'):
         """The globals of one add-on call, as Kodi makes it."""
         self.G.init_globals(['plugin://plugin.video.rivedila7/', '1', '?mode=%s' % mode])
@@ -136,6 +142,51 @@ class CatalogTest(unittest.TestCase):
         self.entering()
         self.catalog.tutti_programmi()
         self.assertEqual([item['label'] for item in harness.ITEMS], ['Kept', 'By path'])
+
+    def test_the_film_section_lists_the_films_of_its_hub(self):
+        self.serving_hub('film')
+        items, _, dialogs = self.call('?mode=film')
+        self.assertEqual(dialogs, [])
+        self.assertEqual([item['label'] for item in items][:3],
+                         ['Passenger', 'Il favoloso mondo di Amélie', 'Destini incrociati'])
+        self.assertTrue(all(not item['folder'] for item in items))
+        self.assertTrue(all(self.params(item)['play'].startswith('https://www.la7play.it/film/')
+                            for item in items))
+        self.assertTrue(items[0]['item'].art['thumb'].startswith('https://images.la7play.it/'))
+        self.assertEqual(harness.ENDINGS, [{'succeeded': True}])
+
+    def test_a_film_the_hub_recommends_twice_is_listed_once(self):
+        self.serving_hub('film')
+        items, _, _ = self.call('?mode=film')
+        plays = [self.params(item)['play'] for item in items]
+        # the hub carries its films in a grid and recommends some of them again
+        self.assertEqual(len(plays), len(set(plays)))
+        self.assertEqual(len(plays), 16)
+        self.assertEqual([item['label'] for item in items].count('Passenger'), 1)
+
+    def test_a_section_does_not_open_the_hub_page_it_lists(self):
+        self.serving_hub('film')
+        items, _, _ = self.call('?mode=film')
+        self.assertNotIn('https://www.la7play.it/film', [self.params(item)['play'] for item in items])
+
+    def test_the_documentary_section_lists_the_documentaries_of_its_hub(self):
+        self.serving_hub('documentari')
+        items, _, dialogs = self.call('?mode=documentari')
+        self.assertEqual(dialogs, [])
+        plays = [self.params(item)['play'] for item in items]
+        self.assertEqual(len(plays), 17)
+        self.assertTrue(all(not item['folder'] for item in items))
+        # a documentary lives under its own program as often as under the hub
+        self.assertIn('https://www.la7play.it/la-torre-di-babele-doc/puntate/'
+                      'puntata-del-27-10-2026-397975', plays)
+
+    def test_a_hub_the_site_does_not_answer_is_one_dialog(self):
+        self.serve(error=URLError('no route'))
+        items, _, dialogs = self.call('?mode=film')
+        self.assertEqual(items, [])
+        self.assertEqual(dialogs, ['RivediLA7: string 32005'])
+        self.assertEqual(harness.ENDINGS, [{'succeeded': False}])
+        self.assertTrue(harness.LOGS[0].startswith('RivediLA7: film: GqlError: '), harness.LOGS[0])
 
     def test_a_group_the_page_no_longer_publishes_is_a_dialog_not_a_folder(self):
         self.entering()
