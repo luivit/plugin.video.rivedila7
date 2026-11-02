@@ -6,6 +6,10 @@ cards it renders). The week comes from the guide, so the test writes that payloa
 instead of using the captured guide: the fixture of the guide is another program's
 week, and a test that reads two files to find one item is a test that hides its
 own assumptions.
+
+The categories here are listed from their page, because the archive query is made
+to answer nothing: `test_archive.py` is where the archive itself is tested, and
+this file is about what a folder is made of.
 """
 
 import json
@@ -27,6 +31,10 @@ CATEGORY = PROGRAM + '/puntate'
 GUIDE = 'https://www.la7play.it/guida-tv-rivedi/la7'
 GUIDE_CINEMA = 'https://www.la7play.it/guida-tv-rivedi/la7-cinema'
 NODE_PAGE = '/api/gql/' + 'e9d39e6838f7f588'   # nodePage
+REPLICAS = '/api/gql/' + 'e4ec45c8e38bb081'   # filteredNodeReplicas
+
+EMPTY_ARCHIVE = json.dumps({'data': {'filteredNodeReplicas': {
+    'nodes': [], 'pageInfo': {'hasNextPage': False}}}}).encode('utf-8')
 
 
 def guide_page(*pathnames):
@@ -67,13 +75,14 @@ class ProgramTest(unittest.TestCase):
         self.serve()
 
     def serve(self, answers=None, error=None):
-        """The answers a program page asks for: the site's, or the ones a test gives it."""
-        if answers is None:
-            answers = {GUIDE: guide_page(REPLAY),
-                       GUIDE_CINEMA: guide_page(),
-                       NODE_PAGE: fixture('gql-nodePage.json'),
-                       CATEGORY: fixture('page-categoria.html')}
-        self.site = Site(answers, error)
+        """The answers a program page asks for, and the ones a test overrides."""
+        base = {GUIDE: guide_page(REPLAY),
+                GUIDE_CINEMA: guide_page(),
+                NODE_PAGE: fixture('gql-nodePage.json'),
+                REPLICAS: EMPTY_ARCHIVE,
+                CATEGORY: fixture('page-categoria.html')}
+        base.update(answers or {})
+        self.site = Site(base, error)
         self.client.urlopen = self.site
 
     def call(self, query):
@@ -152,8 +161,7 @@ class ProgramTest(unittest.TestCase):
 
     def test_a_category_offers_the_page_after_the_one_it_lists(self):
         second = '/otto-e-mezzo/puntate/puntata-del-1-10-2026-394917'
-        self.serve({CATEGORY + '?page=2': listing_page(card('Puntata del 1/10/2026', second)),
-                    CATEGORY: fixture('page-categoria.html')})
+        self.serve({CATEGORY + '?page=2': listing_page(card('Puntata del 1/10/2026', second))})
         self.call('?mode=tutti_programmi&link=' + urllib.parse.quote(CATEGORY, safe=''))
         last = harness.ITEMS[-1]
         self.assertEqual(last['label'], '[B]string 32003[/B]')
@@ -163,8 +171,7 @@ class ProgramTest(unittest.TestCase):
     def test_a_later_page_is_asked_for_with_the_sites_own_paging(self):
         second = '/otto-e-mezzo/puntate/puntata-del-1-10-2026-394917'
         self.serve({CATEGORY + '?page=3': listing_page(),
-                    CATEGORY + '?page=2': listing_page(card('Puntata del 1/10/2026', second)),
-                    CATEGORY: fixture('page-categoria.html')})
+                    CATEGORY + '?page=2': listing_page(card('Puntata del 1/10/2026', second))})
         self.call('?mode=tutti_programmi&link=' + urllib.parse.quote(CATEGORY, safe='') + '&page=2')
         self.assertIn(CATEGORY + '?page=2', self.site.asked)
         self.assertEqual([item['label'] for item in harness.ITEMS], ['Puntata del 1/10/2026'])
@@ -173,7 +180,7 @@ class ProgramTest(unittest.TestCase):
     def test_a_page_that_repeats_itself_is_not_offered_again(self):
         # the same listing answers every page number: paging would never end, so
         # the next page is offered only when it publishes something this one does not
-        self.serve({CATEGORY: fixture('page-categoria.html')})
+        self.serve({})
         self.call('?mode=tutti_programmi&link=' + urllib.parse.quote(CATEGORY, safe=''))
         self.assertNotIn('[B]string 32003[/B]', [item['label'] for item in harness.ITEMS])
 

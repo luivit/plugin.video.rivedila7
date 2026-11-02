@@ -29,6 +29,10 @@ What is saved:
                           the programs page as data: its carousels and the few
                           programs of each that are kept (the nine groups are all
                           real, three items each stand in for the rest)
+    gql-filteredNodeReplicas.json
+                          the archive of one program: the shape of its answers and
+                          the newest six of the hundred it gives (the whole answer
+                          is 150 kB of the same node)
 
 A page fixture is the payload of the page, re-encoded as a single push chunk: the
 site sends it in two or three chunks, which is a delivery detail `decode()` folds
@@ -50,6 +54,7 @@ RSC_PUSH = 'self.__next_f.push('
 QUERIES = {
     'nodePage': 'e9d39e6838f7f588',
     'allPrograms': 'f7034d55158fc906',
+    'filteredNodeReplicas': 'e4ec45c8e38bb081',
     'nsContentHub': '0f3f2c4225230faf',
 }
 
@@ -62,7 +67,10 @@ FIXTURES = [
     ('gql-nodePage.json', 'gql', {'query': 'nodePage', 'variables': {'path': 'otto-e-mezzo'}}, None),
     ('gql-allPrograms.json', 'gql', {'query': 'allPrograms', 'variables': None}, None),
     ('gql-nsContentHub-programmi.json', 'gql',
-     {'query': 'nsContentHub', 'variables': {'path': '/programmi'}}, {'items': 3}),
+     {'query': 'nsContentHub', 'variables': {'path': '/programmi'}}, {'slots': 3}),
+    ('gql-filteredNodeReplicas.json', 'gql',
+     {'query': 'filteredNodeReplicas', 'variables': {'path': 'Otto e mezzo', 'value': 100}},
+     {'nodes': 6}),
 ]
 
 
@@ -175,10 +183,23 @@ def trim_slots(text, items):
     return json.dumps(answer, separators=(',', ':'))
 
 
+def trim_nodes(text, count):
+    """Keep the first nodes of an answer: the shape, not the hundred."""
+    answer = json.loads(text)
+    for result in (answer.get('data') or {}).values():
+        if isinstance(result, dict) and isinstance(result.get('nodes'), list):
+            result['nodes'] = result['nodes'][:count]
+    return json.dumps(answer, separators=(',', ':'))
+
+
 def build(kind, what, trimming):
     if kind == 'gql':
         body = gql(QUERIES[what['query']], what['variables'])
-        return trim_slots(body, trimming['items']) if trimming else body
+        if not trimming:
+            return body
+        if 'slots' in trimming:
+            return trim_slots(body, trimming['slots'])
+        return trim_nodes(body, trimming['nodes'])
     body = payload(fetch(what))
     if trimming:
         body = trim(body, trimming['key'], trimming['days'], trimming['programs'])

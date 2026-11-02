@@ -8,10 +8,10 @@ Three listings live here, and each reads the site's data rather than its markup:
   page itself carries no episode list, its submenu carries the categories;
 * a category of a program gives the cards one page of it renders.
 
-A category is the one listing read off a page: no query answers with the cards of
-a category page, so its payload text is read line by line there. The archive query
-of the next commit takes that job over for the categories with a replica archive,
-and leaves the page listing as the fallback for the clips.
+A category is one of two things, and `archive.py` owns both: a program's replays
+are read whole from the archive query, newest first, while a listing of clips is
+read off its page and paged with `?page=N`. Either way a folder here is only the
+rendering: the items are rendered, the retrieval is not this module's business.
 
 What holds throughout: one Directory per folder, closed once on every path, and a
 failure named by the section that failed.
@@ -25,7 +25,7 @@ import xbmcgui
 from resources.lib.globals import G
 from resources.lib.kodi.dialogs import AddonError
 from resources.lib.kodi.directory import Directory
-from resources.lib.la7play import client, payload
+from resources.lib.la7play import archive, client, payload
 
 GIORNI_SETTIMANA = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica']
 MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio',
@@ -138,38 +138,16 @@ def _program(directory, pathname):
 def _items(directory, pathname):
     """The items one page of a category publishes, and the way to its next page."""
     page = max(G.PAGENUM, 1)
-    found = _listing(pathname, page)
-    if not found:
+    nodes, more = archive.items(pathname, page)
+    if not nodes:
         raise AddonError(G.MODE, LookupError('%s publishes nothing' % pathname))
-    for node in found:
+    for node in nodes:
         params, item = _node(node)
         directory.add(params, item, folder=False, unique=True)
-    paths = set(payload.node_path(node) for node in found)
-    # the next page is offered only when it publishes something this one does not:
-    # a site that answers the same page for every number would page forever
-    if any(payload.node_path(node) not in paths for node in _listing(pathname, page + 1)):
+    if more:
+        # only a listing pages: an archive is one query, read whole
         directory.add({'mode': G.MODE, 'link': G.URL_PLAY_BASE + pathname,
                        'page': str(page + 1)}, _next_page())
-
-
-def _listing(pathname, page):
-    """The items one page of a category publishes, in the order the site puts them."""
-    url = G.URL_PLAY_BASE + pathname
-    if page > 1:
-        # the site pages a listing with a plain query string
-        url += '?page=%d' % page
-    try:
-        html = client.fetch_html(url)
-    except client.SiteError as cause:
-        raise AddonError(G.MODE, cause)
-    items = []
-    for node in payload.page_nodes(html):
-        # a category lists its items: neither itself nor the page it belongs to
-        if payload.is_ancestor(payload.node_path(node), pathname):
-            continue
-        if payload.is_playable(node):
-            items.append(node)
-    return items
 
 
 def _categoria(pathname, voce):
