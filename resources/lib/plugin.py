@@ -109,11 +109,6 @@ def run(argv):
     """ Addon entry point """
     G.init_globals(argv)
 
-    if G.PARAMS.get("page", "") == "":
-        G.PAGENUM = 0
-    else:
-        G.PAGENUM = int(G.PARAMS.get("page", ""))
-
     try:
         dispatch()
     except AddonError as error:

@@ -11,8 +11,12 @@ import xbmcaddon
 
 
 class GlobalVariables(object):
-    """Encapsulation for global variables to work around quirks with
-    Kodi's reuseLanguageInvoker behavior"""
+    """The configuration of the add-on, and the parameters of one invocation.
+
+    The values that come from the site, from Kodi or from the licence server are here
+    so that no module under la7play/ or playback/ holds a constant of its own; the
+    values that change per invocation are rebuilt in init_globals().
+    """
     # pylint: disable=attribute-defined-outside-init
     # pylint: disable=invalid-name, too-many-instance-attributes
 
@@ -59,13 +63,8 @@ class GlobalVariables(object):
     DRM_PROTOCOL = 'mpd'
     KEY_WIDEVINE = "https://la7.prod.conax.cloud/widevine/license"
     HEADERS_SET = {
-        'host_token': 'pat.la7.it',
         'host_license': 'la7.prod.conax.cloud',
         'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36',
-        'accept': '*/*',
-        'accept-language': 'en,en-US;q=0.9,it;q=0.8',
-        'dnt': '1',
-        'te': 'trailers',
         'origin': 'https://www.la7.it',
         'referer': 'https://www.la7.it/',
     }
@@ -75,19 +74,16 @@ class GlobalVariables(object):
         # Constructing this object must have no side effects: the module is imported before
         # Kodi has called the add-on even once, so anything that needs the add-on (settings,
         # paths, language) is read in init_globals() instead.
-        self.IS_ADDON_FIRSTRUN = None
         self.ADDON = None
-        self.ADDON_DATA_PATH = None
-        self.DATA_PATH = None
 
     def init_globals(self, argv):
         """Initialized globally used module variables. Needs to be called at start of each plugin instance!"""
-        # IS_ADDON_FIRSTRUN: specifies if the add-on has been initialized for the first time
-        #                    (reuseLanguageInvoker not used yet)
-        self.IS_ADDON_FIRSTRUN = self.IS_ADDON_FIRSTRUN is None
         # xbmcaddon.Addon must be created at every instance otherwise it does not read any new changes to the settings
         self.ADDON = xbmcaddon.Addon()
         self.LANGUAGE = self.ADDON.getLocalizedString
+        self.PLUGIN_NAME = self.ADDON.getAddonInfo('name')
+        # the handle identifies this invocation: Kodi hands the add-on a new one per call
+        self.PLUGIN_HANDLE = int(argv[1])
         self.PARAMS = parameters_string_to_dict(argv[2])
         self.MODE = str(G.PARAMS.get("mode", ""))
         self.GIORNO = str(G.PARAMS.get("giorno", ""))
@@ -99,22 +95,13 @@ class GlobalVariables(object):
         self.PLOT = str(G.PARAMS.get("plot", ""))
         self.PLAY = str(G.PARAMS.get("play", ""))
         self.QUERY = str(G.PARAMS.get("q", ""))
-        self.PAGENUM = 0
-
-        if self.IS_ADDON_FIRSTRUN:
-            # Global variables that do NOT need to be updated at every addon run
-            self.ADDON_ID = self.ADDON.getAddonInfo('id')
-            self.PLUGIN_NAME = self.ADDON.getAddonInfo('name')
-            self.ICON = self.ADDON.getAddonInfo('icon')
-            self.ADDON_DATA_PATH = self.ADDON.getAddonInfo('path')  # Add-on folder
-            self.DATA_PATH = self.ADDON.getAddonInfo('profile')  # Add-on user data folder
-            self.PLUGIN_HANDLE = int(argv[1])
+        # the page of a listing, when the folder offered one: 0 means the first
+        page = str(G.PARAMS.get("page", ""))
+        self.PAGENUM = int(page) if page.isdigit() else 0
 
 
 def parameters_string_to_dict(parameters):
-    # xbmc.log('PARAMETERS------: '+str(parameters),xbmc.LOGINFO)
-    param_dict = dict(parse_qsl(parameters[1:]))
-    return param_dict
+    return dict(parse_qsl(parameters[1:]))
 
 
 # We initialize an instance importable of GlobalVariables from run_addon.py,

@@ -64,7 +64,7 @@ def gruppo(name):
                 _programs(directory, (slot.get('paginatedItems') or {}).get('items') or [])
                 return
         # the group is not on the page any more: fail the folder, never show it empty
-        raise AddonError('tutti_programmi', LookupError(name))
+        raise AddonError(G.MODE, LookupError(name))
 
 
 def tutti_programmi():
