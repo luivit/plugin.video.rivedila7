@@ -40,7 +40,9 @@ class GlobalVariables(object):
     URL_DRM_TOKEN = "https://svc-01.la7play.it/DRM/tk.php"
     URL_PROGRAMMI = "https://www.la7.it/programmi"
     URL_TUTTI_PROGRAMMI = "https://www.la7.it/tutti-i-programmi"
-    URL_TECHE_LA7 = "https://www.la7.it/tutti-i-personaggi"
+    URL_PODCAST = "https://www.la7play.it/podcast"
+    URL_PODCAST_LOOKUP = "https://itunes.apple.com/lookup?id="
+    PODCAST_PER_PAGINA = 20
     URL_CERCA_LA7 = "https://www.la7play.it/ricerca"
 
 

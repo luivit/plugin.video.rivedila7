@@ -8,6 +8,8 @@ import datetime
 import requests
 import inputstreamhelper
 from html import unescape
+from email.utils import parsedate
+import xml.etree.ElementTree as ET
 
 import urllib.parse
 from urllib.request import Request, urlopen
@@ -49,8 +51,8 @@ def show_root_menu():
     li_style.setArt({'thumb': os.path.join(G.THUMB_PATH, 'programmi.jpg'), 'fanart': G.FANART_PATH})
     add_directory_item_nodup({"mode": "tutti_programmi"}, li_style)
     li_style = xbmcgui.ListItem('[B]' + G.LANGUAGE(32008) + '[/B]', offscreen=True)
-    li_style.setArt({'thumb': os.path.join(G.THUMB_PATH, 'techela7.jpg'), 'fanart': G.FANART_PATH})
-    add_directory_item_nodup({"mode": "teche_la7"}, li_style)
+    li_style.setArt({'thumb': os.path.join(G.THUMB_PATH, 'podcast.jpg'), 'fanart': G.FANART_PATH})
+    add_directory_item_nodup({"mode": "podcast"}, li_style)
     li_style = xbmcgui.ListItem('[B]' + G.LANGUAGE(32012) + '[/B]', offscreen=True)
     li_style.setArt({'thumb': os.path.join(G.THUMB_PATH, 'cerca.png'), 'fanart': G.FANART_PATH})
     add_directory_item_nodup({"mode": "cerca_la7"}, li_style)
@@ -436,72 +438,102 @@ def programmi_la7prime():
     xbmcplugin.endOfDirectory(handle=G.PLUGIN_HANDLE, succeeded=True)
 
 
-def programmi_lettera_teche_la7():
-    req_teche = Request(G.URL_TECHE_LA7, headers={'user-agent': G.HEADERS_SET['user-agent']})
-    page_teche = urlopen(req_teche)
-    html_teche = BeautifulSoup(page_teche, 'html.parser')
-    
-    teche_la7 = html_teche.find_all('div', class_='list-item')
+def podcast_serie():
+    # elenco delle serie: schede PodcastSeries della pagina /podcast di la7play.it
+    html = get_html(G.URL_PODCAST)
+    trovati = []
+    for m in re.finditer(r'\{"@type":"PodcastSeries"', html):
+        serie = json.JSONDecoder().raw_decode(html, m.start())[0]
+        # gli episodi non sono sul sito: il feed RSS si ricava dal link Apple Podcasts della serie
+        apple = re.search(r'podcasts\.apple\.com/\S*/id(\d+)', ' '.join(serie.get('sameAs') or []))
+        if not apple or apple.group(1) in trovati:
+            continue
+        trovati.append(apple.group(1))
+        titolo = (serie.get('name') or '').strip()
+        thumb = (serie.get('image') or {}).get('url') or ''
+        liStyle = xbmcgui.ListItem(titolo, offscreen=True)
+        liStyle.setArt({'thumb': thumb, 'poster': thumb, 'fanart': G.FANART_PATH})
+        liStyle.setInfo('video', {'plot': (serie.get('description') or '').strip()})
+        add_directory_item_nodup({"mode": G.MODE, "link": apple.group(1)}, liStyle, titolo)
 
-    if teche_la7:
-        for dati in teche_la7:
-            if not dati.find('a'):
+    xbmcplugin.endOfDirectory(handle=G.PLUGIN_HANDLE, succeeded=True)
+
+
+def podcast_leggi_feed(apple_id):
+    # legge dal feed solo gli episodi della pagina corrente: alcuni feed hanno migliaia di episodi
+    itunes = '{http://www.itunes.com/dtds/podcast-1.0.dtd}'
+    feed = json.loads(get_html(G.URL_PODCAST_LOOKUP + apple_id))['results'][0]['feedUrl']
+    inizio = G.PAGENUM * G.PODCAST_PER_PAGINA
+    episodi = []
+    thumb_serie = ''
+    n = 0
+    req = Request(feed, headers={'user-agent': G.HEADERS_SET['user-agent']})
+    with urlopen(req) as response:
+        for _, elem in ET.iterparse(response):
+            if elem.tag == itunes + 'image' and not thumb_serie:
+                thumb_serie = elem.get('href') or ''
+            if elem.tag != 'item':
                 continue
-            
-            titolo_div = dati.find('div', class_='titolo')
-            if titolo_div:
-                nomicognomi = titolo_div.text.strip()
-                cognominomi = " ".join(reversed(nomicognomi.split(" ")))
-                
-                url_trovato = dati.a.get('href').strip()
-                bio_link = G.URL_BASE + url_trovato
-
-                liStyle = xbmcgui.ListItem(cognominomi)
-                
-                video_info_tag = liStyle.getVideoInfoTag()
-                video_info_tag.setTitle(cognominomi)
-                
-                thumb = ''
-                try:
-                    thumb_div = dati.find('div', class_='image-bg lozad')
-                    if thumb_div and thumb_div.has_attr('data-background-image'):
-                        thumb = thumb_div.get('data-background-image')
-                except Exception:
-                    pass
-                
-                if thumb:
-                    liStyle.setArt({'thumb': thumb})
-                
-                liStyle.setArt({'fanart': G.FANART_PATH})
-                
-                add_directory_item_nodup({"mode": G.MODE, "link": bio_link}, liStyle, cognominomi)
-
-        xbmcplugin.addSortMethod(G.PLUGIN_HANDLE, xbmcplugin.SORT_METHOD_LABEL_IGNORE_FOLDERS)
-        xbmcplugin.endOfDirectory(handle=G.PLUGIN_HANDLE, succeeded=True)
+            n += 1
+            if n > inizio + G.PODCAST_PER_PAGINA:
+                return episodi, True
+            if n > inizio:
+                enclosure = elem.find('enclosure')
+                immagine = elem.find(itunes + 'image')
+                episodi.append({
+                    'titolo': (elem.findtext('title') or '').strip(),
+                    'url': enclosure.get('url') if enclosure is not None else '',
+                    'data': parsedate(elem.findtext('pubDate') or ''),
+                    'durata': elem.findtext(itunes + 'duration') or '',
+                    'plot': elem.findtext(itunes + 'summary') or elem.findtext('description') or '',
+                    'thumb': (immagine.get('href') if immagine is not None else '') or thumb_serie,
+                })
+            elem.clear()
+    return episodi, False
 
 
-def mostra_biografia():
-    plot = "Biografia non disponibile."
-    titolo = "Biografia"
+def podcast_episodi():
     try:
-        req_bio = Request(G.LINK, headers={'user-agent': G.HEADERS_SET['user-agent']})
-        page_bio = urlopen(req_bio)
-        html_bio = BeautifulSoup(page_bio, 'html.parser')
-
-        bio_element = html_bio.find('div', class_='field-name-field-biografia')
-        if bio_element:
-            plot = ' '.join(bio_element.text.split()).strip()
-
-        titolo_element = html_bio.find('h1') or html_bio.find('div', class_='titolo')
-        if titolo_element:
-            titolo = titolo_element.text.strip()
-
+        episodi, altre_pagine = podcast_leggi_feed(G.LINK)
     except Exception as e:
-        xbmc.log(f'ERRORE ESTRAZIONE BIOGRAFIA da {G.LINK}: {str(e)}', xbmc.LOGWARNING)
-        plot = f"Errore durante il caricamento: {str(e)}"
+        xbmc.log('EXCEP PODCAST: ' + str(e), xbmc.LOGINFO)
+        xbmcgui.Dialog().ok(G.PLUGIN_NAME, G.LANGUAGE(32005))
+        xbmcplugin.endOfDirectory(handle=G.PLUGIN_HANDLE, succeeded=False)
+        return
 
-    xbmcgui.Dialog().textviewer(titolo, plot)
-    xbmcplugin.endOfDirectory(handle=G.PLUGIN_HANDLE, succeeded=False)
+    for episodio in episodi:
+        if not episodio['url']:
+            continue
+        data = '[I] - (' + time.strftime('%d.%m.%Y', episodio['data']) + ')[/I]' if episodio['data'] else ''
+        titolo = episodio['titolo'] + data
+        # durata in secondi oppure hh:mm:ss
+        durata = 0
+        if re.fullmatch(r'[\d:]+', episodio['durata']):
+            for valore in episodio['durata'].split(':'):
+                durata = durata * 60 + int(valore or 0)
+        plot = unescape(re.sub(r'<[^>]+>', '', episodio['plot']))
+        # il feed aggiunge a ogni descrizione questa frase pubblicitaria
+        plot = re.sub(r'Learn more about your ad choices.*', '', plot, flags=re.S).strip()
+        liStyle = xbmcgui.ListItem(titolo, offscreen=True)
+        liStyle.setArt({'thumb': episodio['thumb'], 'fanart': G.FANART_PATH})
+        liStyle.setInfo('video', {'plot': plot, 'duration': durata})
+        add_directory_item_nodup({"mode": G.MODE, "play": episodio['url'], "titolo": titolo, "thumb": episodio['thumb']}, liStyle, titolo, folder=False)
+
+    pagenext(altre_pagine)
+
+    xbmcplugin.setContent(G.PLUGIN_HANDLE, 'episodes')
+    xbmcplugin.endOfDirectory(handle=G.PLUGIN_HANDLE, succeeded=True)
+
+
+def play_podcast():
+    listitem = xbmcgui.ListItem(G.TITOLO, offscreen=True)
+    listitem.setInfo('video', {'Title': G.TITOLO})
+    if G.THUMB != "":
+        listitem.setArt({'thumb': G.THUMB})
+    listitem.setMimeType('audio/mpeg')
+    listitem.setContentLookup(False)
+    listitem.setPath(G.PLAY)
+    xbmcplugin.setResolvedUrl(G.PLUGIN_HANDLE, True, listitem)
 
 
 def programmi_lettera_tg_meteo():
@@ -817,30 +849,6 @@ def video_programma():
     xbmcplugin.endOfDirectory(handle=G.PLUGIN_HANDLE, succeeded=True)
 
 
-def video_programma_teche_la7():
-    # xbmc.log('LINK------: '+str(G.LINK),xbmc.LOGINFO)
-    req = Request(G.LINK + "?page=" + str(G.PAGENUM), headers={'user-agent': G.HEADERS_SET['user-agent']})
-    page = urlopen(req)
-    html = BeautifulSoup(page, 'html.parser')
-
-    if G.PAGENUM == 0:
-        # PREVIEW VIDEO
-        video_preview = html.find('div', class_='vetrina-protagonista')
-        if video_preview:
-            get_rows_video_techela7_preview(video_preview)
-
-    # ARCHIVIO VIDEO    
-    if html.find('div', class_='view-content clearfix'):
-        video_techela7 = html.find('div', class_='view-grouping-content').find_all('div', class_='list-item')
-        if video_techela7:
-            get_rows_video_techela7(video_techela7)
-            page = html.find('li', class_='pager-next')
-            pagenext(page)
-
-    xbmcplugin.setContent(G.PLUGIN_HANDLE, 'episodes')
-    xbmcplugin.endOfDirectory(handle=G.PLUGIN_HANDLE, succeeded=True)
-
-
 def first_video(first, titolo, filtro):
     # xbmc.log('FILTRO FIRST: '+ titolo + str(filtro), xbmc.LOGINFO)
     if filtro:
@@ -911,41 +919,6 @@ def get_rows_video_tgdigital(video):
         liStyle.setArt({'thumb': thumb, 'fanart': G.FANART_PATH})
         liStyle.setInfo('video', {'plot': plot})
         add_directory_item_nodup({"mode": G.MODE, "play": link, "titolo": titolo, "thumb": thumb, "plot": plot}, liStyle, folder=False)
-
-
-def get_rows_video_techela7_preview(video):
-    # xbmc.log('TEST-----: '+str(video),xbmc.LOGINFO)
-    regex5 = 'poster: "(.*?)"'
-    html = str(video)
-
-    titolo = video.find('a', class_='title').text.strip()
-    data = '[I] - (' + video.find('span', class_='date-display-single').text.strip() + ')[/I]'
-    # xbmc.log('DATA-----: '+str(data),xbmc.LOGINFO)
-    if re.findall(regex5, html):
-        # xbmc.log('REGEX----------: '+str(re.findall(regex5, html)),xbmc.LOGINFO)
-        thumb = 'https:' + re.findall(regex5, html)[0]
-    else:
-        thumb = ''
-    plot = video.find('div', class_='description').text.strip()
-    link = G.URL_BASE + video.find('a', class_='title').get('href')
-    liStyle = xbmcgui.ListItem(titolo + data, offscreen=True)
-    liStyle.setArt({'thumb': thumb, 'fanart': G.FANART_PATH})
-    liStyle.setInfo('video', {'plot': plot})
-    add_directory_item_nodup({"mode": G.MODE, "play": link, "titolo": titolo + data, "thumb": thumb, "plot": plot}, liStyle, folder=False)
-
-
-def get_rows_video_techela7(video):
-    for div in video:
-        titolo = div.find('div', class_='title').text.strip()
-        data = '[I] - (' + div.find('div', class_='data').text.strip() + ')[/I]'
-        # xbmc.log('DATA-----: '+str(data),xbmc.LOGINFO)
-        thumb = 'https:' + div.find('div', class_='bg-img lozad').get('data-background-image')
-        plot = ""
-        link = G.URL_BASE + div.a.get('href').strip()
-        liStyle = xbmcgui.ListItem(titolo + data, offscreen=True)
-        liStyle.setArt({'thumb': thumb, 'fanart': G.FANART_PATH})
-        liStyle.setInfo('video', {'plot': plot})
-        add_directory_item_nodup({"mode": G.MODE, "play": link, "titolo": titolo + data, "thumb": thumb, "plot": plot}, liStyle, folder=False)
 
 
 def get_rows_video_landpage_preview(video):
@@ -1068,14 +1041,14 @@ def run(argv):
         else:
             play_video(G.PLAY, False)
 
-    elif G.MODE == "teche_la7":
+    elif G.MODE == "podcast":
         if G.PLAY == "":
             if G.LINK == "":
-                programmi_lettera_teche_la7()
+                podcast_serie()
             else:
-                mostra_biografia()
+                podcast_episodi()
         else:
-            play_video(G.PLAY, False)
+            play_podcast()
 
     elif G.MODE == "cerca_la7":
         if G.PLAY == "":
