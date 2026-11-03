@@ -31,9 +31,10 @@ class GlobalVariables(object):
     URL_RIVEDILA7 = "https://www.la7play.it/guida-tv-rivedi/la7"
     URL_RIVEDILA7CINEMA = "https://www.la7play.it/guida-tv-rivedi/la7-cinema"
 
-    # playback: the CDNs the site's own player uses, and the token endpoint that lets
-    # the DRM CDN answer. All four addresses verified on 2026-11-02: the manifest of
-    # an episode, the playlist of a clear one, and both live manifests answer 200
+    # playback: the CDNs the site's own player uses. Verified on 2026-11-02: the
+    # manifest of an episode, the playlist of a clear one, and both live manifests
+    # answer 200. The license addresses are what an episode page publishes today and
+    # what this add-on uses when the page stops publishing them
     URL_CDN_VOD = "https://awsvodpkg.iltrovatore.it"
     URL_CDN_DRM = "https://d3iki3eydrtvsa.cloudfront.net"
     URL_CDN_LIVE = "https://d15umi5iaezxgx.cloudfront.net"
@@ -63,7 +64,6 @@ class GlobalVariables(object):
     DRM_PROTOCOL = 'mpd'
     KEY_WIDEVINE = "https://la7.prod.conax.cloud/widevine/license"
     HEADERS_SET = {
-        'host_license': 'la7.prod.conax.cloud',
         'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36',
         'origin': 'https://www.la7.it',
         'referer': 'https://www.la7.it/',

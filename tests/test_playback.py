@@ -40,15 +40,39 @@ def video_page(**fields):
             % json.dumps(json.dumps({'videoData': fields}))).encode('utf-8')
 
 
+def page_with(player, settings):
+    """A page carrying both the video and the player settings the site publishes."""
+    return ('<script>self.__next_f.push([1,%s])</script>'
+            % json.dumps(json.dumps({'videoData': player, 'playerSettings': settings}))
+            ).encode('utf-8')
+
+
 def clear_page():
     return video_page(path='/otto-e-mezzo/puntate/puntata-del-30-10-2026-398336',
                       drm=False, urlVideo=None,
                       uploadVideo={'cf_remote_url': CLEAR_REMOTE, 'cf_old_entry_id': ''})
 
 
+THE_EPISODES_DRM_SERVERS = ('com.widevine.alpha|https://licence.example.invalid/widevine;'
+                            'com.microsoft.playready|https://licence.example.invalid/playready;'
+                            'fairplay|https://licence.example.invalid/fairplay')
+
+
 def protected_page():
     return video_page(path='/film/passenger-397232', drm=True, drmContentId='667',
                       uploadVideo={'cf_remote_url': '/F100623_20261020100231', 'cf_old_entry_id': ''})
+
+
+def page_naming_its_own_player_settings():
+    """A protected page that says where its license, its token and its CDNs live."""
+    return page_with(
+        {'path': '/film/passenger-397232', 'drm': True,
+         'uploadVideo': {'cf_remote_url': '/F100623_20261020100231', 'cf_old_entry_id': ''}},
+        {'abilitaDrm': True, 'drmContentId': '4242',
+         'drmLicenseServer': THE_EPISODES_DRM_SERVERS,
+         'drmTokenEndpoint': 'https://token.example.invalid/tk.php',
+         'hostnameCdn': 'https://clear.example.invalid',
+         'hostnameCdnDrm': 'https://drm.example.invalid'})
 
 
 class Token(object):
@@ -115,6 +139,32 @@ class PlaybackTest(unittest.TestCase):
         self.assertIn('|R{SSM}|', license_key)
         self.assertEqual(len(self.token.asked), 1)
         self.assertIn('id=667&contentType=VOD', self.token.asked[0])
+
+    def test_a_page_that_names_its_license_server_is_played_with_that_one(self):
+        """The site moves its license server and its CDNs without telling anyone: the page says where."""
+        self.call('?mode=film&play=' + FILM, FILM, page_naming_its_own_player_settings())
+        resolved = harness.RESOLVED[0]
+        self.assertEqual(resolved['item'].path,
+                         'https://drm.example.invalid/F100623_20261020100231'
+                         '/DASH/F100623_20261020100231.mpd')
+        license_key = resolved['item'].properties['inputstream.adaptive.license_key']
+        self.assertTrue(license_key.startswith('https://licence.example.invalid/widevine?'),
+                        license_key)
+        # the host header follows the license, it is not a constant of the add-on
+        self.assertIn('host=licence.example.invalid', license_key)
+        self.assertEqual(len(self.token.asked), 1)
+        self.assertTrue(self.token.asked[0].startswith('https://token.example.invalid/tk.php?'))
+        self.assertIn('id=4242&contentType=VOD', self.token.asked[0])
+
+    def test_a_clear_episode_is_played_from_the_cdn_the_page_names(self):
+        page = page_with(
+            {'path': '/otto-e-mezzo/puntate/puntata-del-30-10-2026-398336', 'drm': False,
+             'uploadVideo': {'cf_remote_url': CLEAR_REMOTE, 'cf_old_entry_id': ''}},
+            {'hostnameCdn': 'https://clear.example.invalid/'})
+        self.call('?mode=tutti_programmi&play=' + EPISODE, EPISODE, page)
+        self.assertEqual(harness.RESOLVED[0]['item'].path,
+                         CLEAR_PLAYLIST.replace('https://awsvodpkg.iltrovatore.it',
+                                                'https://clear.example.invalid'))
 
     def test_a_video_url_the_page_publishes_is_played_as_it_is(self):
         page = video_page(path='/x/video/y-1', urlVideo='https://example.invalid/a.m3u8')
