@@ -40,26 +40,34 @@ msgctxt "#32005"
 msgid "Unable to view this program"
 msgstr ""
 
-msgctxt "#32007"
-msgid "News & Weather"
-msgstr ""
-
 msgctxt "#32006"
 msgid "Programs"
 msgstr ""
 
-msgctxt "#32008"
-msgid "Personalities"
-msgstr ""
-
-msgctxt "#32010"
-msgid "LA7 Prime"
-msgstr ""
-
-msgctxt "#32011"
-msgid "LA7 Eventi Live"
-msgstr ""
-
 msgctxt "#32012"
 msgid "Search on LA7"
+msgstr ""
+
+msgctxt "#32013"
+msgid "All Films"
+msgstr ""
+
+msgctxt "#32014"
+msgid "Documentaries"
+msgstr ""
+
+msgctxt "#32015"
+msgid "All programs (A-Z)"
+msgstr ""
+
+msgctxt "#32016"
+msgid "Podcasts"
+msgstr ""
+
+msgctxt "#32017"
+msgid "News"
+msgstr ""
+
+msgctxt "#32018"
+msgid "Weather"
 msgstr ""

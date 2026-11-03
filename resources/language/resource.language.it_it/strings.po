@@ -40,26 +40,34 @@ msgctxt "#32005"
 msgid "Unable to view this program"
 msgstr "Impossibile visualizzare questo programma"
 
-msgctxt "#32007"
-msgid "News & Weather"
-msgstr "TG & Meteo"
-
 msgctxt "#32006"
 msgid "Programs"
 msgstr "Programmi"
 
-msgctxt "#32008"
-msgid "Personalities"
-msgstr "Personaggi"
-
-msgctxt "#32010"
-msgid "LA7 Prime"
-msgstr "LA7 Prime"
-
-msgctxt "#32011"
-msgid "LA7 Eventi Live"
-msgstr "Diretta LA7 Eventi"
-
 msgctxt "#32012"
 msgid "Search on LA7"
 msgstr "Cerca su LA7"
+
+msgctxt "#32013"
+msgid "All Films"
+msgstr "Tutti i Film"
+
+msgctxt "#32014"
+msgid "Documentaries"
+msgstr "Documentari"
+
+msgctxt "#32015"
+msgid "All programs (A-Z)"
+msgstr "Tutti i programmi (A-Z)"
+
+msgctxt "#32016"
+msgid "Podcasts"
+msgstr "Podcast"
+
+msgctxt "#32017"
+msgid "News"
+msgstr "Notizie"
+
+msgctxt "#32018"
+msgid "Weather"
+msgstr "Meteo"

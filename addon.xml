@@ -1,25 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.rivedila7" name="LA7-LA7Cinema" version="7.1.0" provider-name="Luivit, Testato">
+<addon id="plugin.video.rivedila7" name="LA7-LA7Cinema" version="8.0.0" provider-name="Luivit, Testato">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="script.module.requests" version="0.0.0"/>
     <import addon="script.module.inputstreamhelper" version="0.0.0"/>
-    <import addon="script.module.beautifulsoup4" version="0.0.0"/>
   </requires>
   <extension point="xbmc.python.pluginsource" library="addon.py">
     <provides>video</provides>
   </extension>
   <extension point="xbmc.addon.metadata">
-    <reuselanguageinvoker>true</reuselanguageinvoker>
+    <reuselanguageinvoker>false</reuselanguageinvoker>
     <summary lang="en_GB">LA7-LA7Cinema</summary>
-    <description lang="en_GB">Live Streaming, Replay the last week, LA7 Prime, On-Demand programs, News and Weather, Teche LA7-The Protagonists</description>
+    <description lang="en_GB">Live Streaming, the last week of replays, All Films, Documentaries, On-Demand programs and Search, from la7play.it</description>
     <summary lang="it_IT">LA7-LA7Cinema</summary>
-    <description lang="it_IT">Diretta Live, Rivedi ultima settimana, LA7 Prime, Programmi On-Demand, Telegiornali e Meteo, Teche LA7-I Protagonisti</description>
+    <description lang="it_IT">Diretta Live, Rivedi ultima settimana, Tutti i Film, Documentari, Programmi On-Demand e Ricerca, da la7play.it</description>
     <language>it</language>
     <platform>all</platform>
     <license>GPL-3.0-only</license>
     <forum>https://forum.kodi.tv/showthread.php?tid=331064</forum>
-    <website>https://www.la7.it</website>
+    <website>https://www.la7play.it</website>
     <email>luivit39@gmail.com, speednpower@gmail.com</email>
     <source>https://github.com/luivit/plugin.video.rivedila7</source>
     <assets>
@@ -29,7 +28,17 @@
       <screenshot>resources/screenshots/screenshot-01.jpg</screenshot>
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
-    <news>7.1.0 (2026-10-08)
+    <news>8.0.0 (2026-11-02)
+- The add-on reads la7play.it, the site LA7 moved to: listings come from its API and its page data, not from scraped markup
+- Sections: LA7 and LA7 Cinema Live, Replay of the last week, Film, Documentari, Programmi, Search
+- A program page opens the categories it publishes; a category opens its archive, newest first
+- Search is the site's search, 20 results per page, and the query survives playback
+- Playback reads the player data of the page: clear HLS, or DASH with the Conax license; live is two fixed manifests
+- News and Weather, Teche LA7, Personalities and LA7 Eventi are gone: the site no longer publishes them
+- beautifulsoup4 is no longer required
+- One dialog and one log line per failure, naming the section that failed
+
+7.1.0 (2026-10-08)
 - Added Search function
 - Fix Personalities biography
 - LA7 Meteo replaced with Omnibus Meteo in the News and Weather section
@@ -42,13 +51,6 @@
 - TG La7d replaced with TG Digital in the News and Weather section
 - Omnibus News replaced with Edicola in the News and Weather section
 - Protagonist section replaced with Personalities section
-
-6.3.0 (2025-05-11)
-- fix Programs title and added Config for manual added programs (thanks @24mu13)
-- patch text not found (thanks @lpuglia)
-
-6.2.1 (2024-05-09)
-- Solved program cataloging (thanks @fabpolli)
     </news>
   </extension>
 </addon>
