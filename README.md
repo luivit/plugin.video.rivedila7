@@ -15,13 +15,23 @@ the markup of the old la7.it pages. See `CHANGELOG.md` for what that changed.
 | Replay LA7 · Replay LA7 Cinema | the week of replays the site's TV guide publishes |
 | Film · Documentari | the two hubs the site publishes, as data: what they list is what they hold |
 | Programmi | the groups of the programs page, and the flat A-Z index |
+| Podcast | the series the site lists, played from the RSS feed each one links to |
+| Notizie · Meteo | the news and the weather, kept as their own sections |
 | Search | the site's own search, 20 results per page, with paging |
 
 A program is a folder of the categories its page publishes ("Replica", "Puntate",
-"Clip"): a category opens its archive, newest first, up to 100 episodes, and a clip
-listing pages with `?page=N`. An item plays the stream the page says it has, or opens
-the program it points at; an article from the search is skipped, because there is
-nothing to watch in it.
+"Clip"). Its replays are an archive that goes back years: it is kept on disk a hundred
+episodes at a time and shown twenty at a time, and the block after the one being read is
+fetched in the background while the user is still on the page before it. A clip listing
+pages with `?page=N`. An item plays the stream the page says it has, or opens the
+program it points at; an article from the search is skipped, because there is nothing to
+watch in it.
+
+Two lists are kept by hand, in `resources/lib/la7play/manuale.py`, because the site has
+them and its own index does not: the programs whose pages answer but that `allPrograms`
+omits (`/facciaafaccia`, `/tgla7`), and the entries of the news and weather sections.
+Every entry is a path of the site - nothing is invented - so a program that stops
+answering fails with the section's name in the dialog.
 
 ## Install tips
 
@@ -39,6 +49,7 @@ make test      # offline: the harness rules and every module, against captured s
 make smoke     # live: walk every section against la7play.it and fail on any dialog
 make fixtures  # re-capture the site fixtures the offline tests read
 make zip       # the installable ZIP, built from the committed tree
+make shipped   # checks the ZIP carries the add-on and not the test suite
 make deploy    # install the committed tree into a local Kodi
 ```
 
@@ -53,6 +64,7 @@ resources/lib/
     directory.py       the Directory context manager: the one caller of endOfDirectory
     items.py           the one place a ListItem is built
     player.py          resolve a stream, or refuse it
+    background.py      the only place a plugin URL is built: work Kodi runs again, unseen
     dialogs.py         AddonError, one log format, one error dialog
     window.py          the one window property the add-on keeps (the search query)
   la7play/             the site, as data: no Kodi URL is built here, no error shown here
@@ -62,6 +74,9 @@ resources/lib/
     guide.py           the TV guide: the week of replays
     program.py         a program page and its categories
     archive.py         a category's archive, and the paged listings
+    archive_store.py   what has been read of an archive, kept on disk between calls
+    podcast.py         the series the site lists and the episode feeds behind them
+    manuale.py         the programs the site's index forgets, and the news/weather lists
     search.py          the site's search
   playback/            streams: the player data of a page, and the license it needs
 ```

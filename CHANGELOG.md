@@ -8,24 +8,33 @@ everything between the menu and the player, and the reason there is a test harne
 the repository:
 
 - Sections: Live LA7 and LA7 Cinema, Replay of the last week, Film, Documentari,
-  Programmi and Search. News and Weather, Teche LA7, Personalities and LA7 Eventi are
-  gone: the site no longer publishes them.
+  Programmi, Podcast, Notizie, Meteo and Search. Teche LA7, Personalities and LA7
+  Eventi are gone: the site no longer publishes them.
 - Listings come from the site's GraphQL API and from its page payload, not from HTML:
   one module per source of content, and a structure that is read by name instead of by
   position.
-- A program page opens the categories it publishes instead of a fixed set of guesses;
-  a category opens its archive (up to 100 episodes, newest first) or, for clip
-  categories, its paged HTML listing.
+- A program page opens the categories it publishes instead of a fixed set of guesses.
+  A category's replays are an archive kept on disk a hundred episodes at a time, shown
+  twenty at a time, with the next block fetched in the background while the user is on
+  the page before it - so the archive reaches back to 2014 instead of stopping at the
+  hundred episodes the old query returned. A clip category pages with `?page=N`.
+- Podcast: the series the site lists, played from the RSS feed each series links to,
+  twenty episodes per page.
+- News and Weather are sections of their own again, as are the programs the site's index
+  forgets (`Faccia a Faccia`, `TG LA7`): `la7play/manuale.py` keeps those entries by
+  hand, as paths of the site.
 - Search is the site's search: 20 hits per page, paging, and a query that survives
   playback.
 - Playback reads the player data the page publishes. A clear episode plays as HLS, a
-  protected one as DASH with the license of the Conax server, live as two fixed
-  manifests - no regex over markup, and one implementation instead of two.
+  protected one as DASH with the license the page names - server, token endpoint, content
+  id and CDNs all come from the page, with the old addresses only as fallback - and live
+  as two fixed manifests: no regex over markup, and one implementation instead of two.
 - Errors: one dialog and one log line naming the section, never a traceback and never
   an empty folder that does not say why.
 - `beautifulsoup4` is no longer required.
 - Tests: `make test` runs the offline suite against captured site answers, `make
-  smoke` walks every section against the live site.
+  smoke` walks every section against the live site. `make zip` builds the installable
+  archive and `make shipped` proves it carries the add-on and not the suite.
 
 ## 7.1.0 (2026-10-08)
 - Added Search function
