@@ -18,7 +18,7 @@ from resources.lib.globals import G
 from resources.lib.kodi import items
 from resources.lib.kodi.dialogs import AddonError
 from resources.lib.kodi.directory import Directory
-from resources.lib.la7play import client, payload
+from resources.lib.la7play import client, manuale, payload
 
 # the programs page of the site, a hub whose carousels are the groups of programs
 PROGRAMMI_HUB = '/programmi'
@@ -37,6 +37,8 @@ ROOT_MENU = (
     ('documentari', 32014, 'filmfiction.jpg', True, False),
     ('tutti_programmi', 32006, 'programmi.jpg', True, False),
     ('podcast', 32016, 'podcast.jpg', True, False),
+    ('notizie', 32017, 'notizie.jpg', True, False),
+    ('meteo', 32018, 'meteo.jpg', True, False),
     ('cerca_la7', 32012, 'cerca.png', True, False),
 )
 
@@ -69,10 +71,19 @@ def gruppo(name):
 
 
 def tutti_programmi():
-    """Every program the site's index publishes, in alphabetical order."""
+    """Every program the site's index publishes, in alphabetical order.
+
+    The index leaves out programs whose pages answer - Faccia a Faccia among them -
+    so the manual list is added to it: what the site publishes is a list plus what the
+    site forgets, and one folder reaches both.
+    """
     with Directory(sort_method=xbmcplugin.SORT_METHOD_LABEL_IGNORE_FOLDERS) as directory:
         rows = (_query('tutti_programmi', 'allPrograms').get('graphqlTuttiProgrammi') or {}).get('results') or []
         _programs(directory, rows)
+        for one in manuale.programmi():
+            # a program the index does not list is still a program of the site
+            directory.add({'mode': G.MODE, 'link': G.URL_PLAY_BASE + one['path']},
+                          items.entry(one['title']), unique=True)
 
 
 def film():

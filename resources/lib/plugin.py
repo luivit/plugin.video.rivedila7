@@ -9,7 +9,7 @@ failure becomes one log line and one dialog.
 from resources.lib.globals import G
 from resources.lib.kodi import player
 from resources.lib.kodi.dialogs import AddonError, report
-from resources.lib.la7play import archive, catalog, podcasts, program, search
+from resources.lib.la7play import archive, catalog, manuale, podcasts, program, search
 from resources.lib.playback import drm, streams
 
 
@@ -96,6 +96,16 @@ def prefetch():
     archive.prefetch(_pathname())
 
 
+def notizie():
+    """The news the site publishes, as their own section."""
+    manuale.notizie()
+
+
+def meteo():
+    """The weather the site publishes, as its own section."""
+    manuale.meteo()
+
+
 def root_menu():
     """The root menu, where a new search starts: the remembered one is dropped."""
     search.forget()
@@ -118,6 +128,8 @@ MODES = {
     'tutti_programmi': tutti_programmi,
     'cerca_la7': cerca_la7,
     'podcast': podcast,
+    'notizie': notizie,
+    'meteo': meteo,
     'prefetch': prefetch,
 }
 

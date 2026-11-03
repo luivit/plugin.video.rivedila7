@@ -64,6 +64,10 @@ SECTIONS = [
     ('tutti_programmi', {'link': 'https://www.la7play.it/otto-e-mezzo/video'}, 3),    # a listed category
     ('film', {}, 3),                                 # the grid of the film hub
     ('documentari', {}, 3),                          # the carousels of the documentary hub
+    ('podcast', {}, 3),                              # the series the site publishes
+    ('notizie', {}, 1),                              # the news, as their own section
+    ('meteo', {}, 2),                                # the weather, as its own section
+    ('tutti_programmi', {'link': 'https://www.la7play.it/facciaafaccia'}, 2),  # a forgotten program
     ('cerca_la7', {'q': 'manovra'}, 3),              # the site's own search
 ]
 

@@ -22,10 +22,10 @@ from tests.site import Site, fixture
 
 MENU = ['[B]string 32002[/B]', '[B]string 32009[/B]', '[B]string 32001[/B]', '[B]string 32004[/B]',
         '[B]string 32013[/B]', '[B]string 32014[/B]', '[B]string 32006[/B]', '[B]string 32016[/B]',
-        '[B]string 32012[/B]']
+        '[B]string 32017[/B]', '[B]string 32018[/B]', '[B]string 32012[/B]']
 
 MODES = ['diretta_la7', 'diretta_la7cinema', 'rivedi_la7', 'rivedi_la7cinema',
-         'film', 'documentari', 'tutti_programmi', 'podcast', 'cerca_la7']
+         'film', 'documentari', 'tutti_programmi', 'podcast', 'notizie', 'meteo', 'cerca_la7']
 
 GROUPS = ['Prima serata', 'La giornata', 'La7Play Original', 'Intrattenimento culturale',
           'Le nostre inchieste', 'Viaggia con noi', 'Lifestyle', 'Eventi', 'Teche']
@@ -78,7 +78,7 @@ class CatalogTest(unittest.TestCase):
     def params(item):
         return dict(urllib.parse.parse_qsl(urllib.parse.urlparse(item['url']).query))
 
-    def test_the_root_menu_is_the_nine_sections_of_the_contract(self):
+    def test_the_root_menu_is_the_eleven_sections_of_the_contract(self):
         self.entering('')
         self.catalog.show_root_menu()
         self.assertEqual([item['label'] for item in harness.ITEMS], MENU)
@@ -125,12 +125,15 @@ class CatalogTest(unittest.TestCase):
                          'otto-e-mezzo/programma-854x480.webp')
         self.assertEqual(harness.ENDINGS, [{'succeeded': True}])
 
-    def test_the_flat_list_is_the_whole_index_of_the_site(self):
+    def test_the_flat_list_is_the_index_of_the_site_and_the_programs_it_forgets(self):
         self.entering()
         self.catalog.tutti_programmi()
         labels = [item['label'] for item in harness.ITEMS]
-        self.assertEqual(len(labels), 71)
-        self.assertEqual(labels, sorted(labels, key=str.casefold))
+        # the site's own index, then the programs whose pages answer but that it does
+        # not list (Kodi sorts the folder itself: the order here is the insertion one)
+        self.assertEqual(labels[:-2], sorted(labels[:-2], key=str.casefold))
+        self.assertEqual(labels[-2:], ['Faccia a Faccia', 'TG LA7'])
+        self.assertEqual(len(labels), len(set(labels)), 'a program is listed once')
         self.assertTrue(all(item['folder'] for item in harness.ITEMS))
         self.assertTrue(all(self.params(item)['link'].startswith('https://www.la7play.it/')
                             for item in harness.ITEMS))
@@ -144,7 +147,10 @@ class CatalogTest(unittest.TestCase):
                          {'titolo': 'By path', 'path': '/by-path'}])
         self.entering()
         self.catalog.tutti_programmi()
-        self.assertEqual([item['label'] for item in harness.ITEMS], ['Kept', 'By path'])
+        labels = [item['label'] for item in harness.ITEMS]
+        self.assertEqual(labels[:2], ['Kept', 'By path'])
+        self.assertNotIn('', labels)
+        self.assertEqual(len(labels), 4, 'the two rows and the two programs of the manual list')
 
     def test_the_film_section_lists_the_films_of_its_hub(self):
         self.serving_hub('film')
@@ -212,7 +218,7 @@ class CatalogTest(unittest.TestCase):
     def test_the_menu_opens_without_asking_the_site(self):
         self.serve(error=URLError('no route'))
         items, _, dialogs = self.call('?mode=')
-        self.assertEqual(len(items), 9)
+        self.assertEqual(len(items), 11)
         self.assertEqual(dialogs, [])
         self.assertEqual(self.site.asked, [])
 
