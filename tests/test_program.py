@@ -31,10 +31,18 @@ CATEGORY = PROGRAM + '/puntate'
 GUIDE = 'https://www.la7play.it/guida-tv-rivedi/la7'
 GUIDE_CINEMA = 'https://www.la7play.it/guida-tv-rivedi/la7-cinema'
 NODE_PAGE = '/api/gql/' + 'e9d39e6838f7f588'   # nodePage
-REPLICAS = '/api/gql/' + 'e4ec45c8e38bb081'   # filteredNodeReplicas
 
-EMPTY_ARCHIVE = json.dumps({'data': {'filteredNodeReplicas': {
-    'nodes': [], 'pageInfo': {'hasNextPage': False}}}}).encode('utf-8')
+
+def replays(pages):
+    """The site's answers for an archive of `pages` pages, twenty replays each."""
+    answers = {}
+    for page in range(1, pages + 1):
+        cards = [card('Puntata del %d' % ((page - 1) * 20 + position),
+                      '/otto-e-mezzo/puntate/puntata-%d' % ((page - 1) * 20 + position))
+                 for position in range(20)]
+        answers[CATEGORY if page == 1 else '%s?page=%d' % (CATEGORY, page)] = listing_page(*cards)
+    answers[CATEGORY + '?page=%d' % (pages + 1)] = listing_page()
+    return answers
 
 
 def guide_page(*pathnames):
@@ -65,6 +73,7 @@ REPLAY = '/otto-e-mezzo/puntate/puntata-del-31-10-2026-398400'
 class ProgramTest(unittest.TestCase):
     def setUp(self):
         harness.install_stubs()
+        harness.reset_profile()
         harness.unload_addon_modules()
         from resources.lib import plugin
         from resources.lib.globals import G
@@ -79,7 +88,6 @@ class ProgramTest(unittest.TestCase):
         base = {GUIDE: guide_page(REPLAY),
                 GUIDE_CINEMA: guide_page(),
                 NODE_PAGE: fixture('gql-nodePage.json'),
-                REPLICAS: EMPTY_ARCHIVE,
                 CATEGORY: fixture('page-categoria.html')}
         base.update(answers or {})
         self.site = Site(base, error)
@@ -160,22 +168,22 @@ class ProgramTest(unittest.TestCase):
         self.assertNotIn('https://www.la7play.it/otto-e-mezzo', plays)
 
     def test_a_category_offers_the_page_after_the_one_it_lists(self):
-        second = '/otto-e-mezzo/puntate/puntata-del-1-10-2026-394917'
-        self.serve({CATEGORY + '?page=2': listing_page(card('Puntata del 1/10/2026', second))})
+        self.serve(replays(6))
         self.call('?mode=tutti_programmi&link=' + urllib.parse.quote(CATEGORY, safe=''))
+        self.assertIn('[B]string 32003[/B]', [item['label'] for item in harness.ITEMS])
         last = harness.ITEMS[-1]
-        self.assertEqual(last['label'], '[B]string 32003[/B]')
         self.assertTrue(last['folder'])
         self.assertEqual(self.params(last), {'mode': 'tutti_programmi', 'link': CATEGORY, 'page': '2'})
 
-    def test_a_later_page_is_asked_for_with_the_sites_own_paging(self):
-        second = '/otto-e-mezzo/puntate/puntata-del-1-10-2026-394917'
-        self.serve({CATEGORY + '?page=3': listing_page(),
-                    CATEGORY + '?page=2': listing_page(card('Puntata del 1/10/2026', second))})
+    def test_the_page_after_the_one_listed_is_read_from_the_archive_kept_on_disk(self):
+        self.serve(replays(6))
+        self.call('?mode=tutti_programmi&link=' + urllib.parse.quote(CATEGORY, safe=''))
+        asked = len(self.site.asked)
         self.call('?mode=tutti_programmi&link=' + urllib.parse.quote(CATEGORY, safe='') + '&page=2')
-        self.assertIn(CATEGORY + '?page=2', self.site.asked)
-        self.assertEqual([item['label'] for item in harness.ITEMS], ['Puntata del 1/10/2026'])
-        self.assertEqual(harness.ITEMS[0]['item'].info['plot'], 'Il testo di Puntata del 1/10/2026')
+        self.assertEqual(len(self.site.asked), asked, 'the second page costs no request')
+        self.assertEqual([item['label'] for item in harness.ITEMS][:2],
+                         ['Puntata del 20', 'Puntata del 21'])
+        self.assertEqual(harness.ITEMS[0]['item'].info['plot'], 'Il testo di Puntata del 20')
 
     def test_a_page_that_repeats_itself_is_not_offered_again(self):
         # the same listing answers every page number: paging would never end, so

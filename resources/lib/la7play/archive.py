@@ -1,80 +1,102 @@
-"""The archive of a category: one query for the replays, the page for the clips.
+"""The archive of a category: a program's replays kept on disk, a clip listing paged.
 
-A program publishes two kinds of category, and the site answers each in its own way:
+A program publishes two kinds of category, and the site pages both with its own
+`?page=N`, twenty items at a time:
 
-* its replays (`/puntate`) come from one query - `filteredNodeReplicas` - which
-  answers with the archive of the program, newest first, a hundred nodes at most.
-  It refuses a bigger page (503), so the cap is asked for from 100 down to 50 to
-  20 before the failure is the failure to report;
-* its clips (`/video`) are a listing of cards, which no query answers: the page is
-  read (`payload.page_nodes`) and paged with the site's own `?page=N`.
+* its replays (`/puntate`) are an archive that goes back years - the last page of
+  Piazzapulita is from November 2014 - and reading it whole on every call would be
+  thirty requests before the folder appears. What has been read is kept in
+  `archive_store`, a hundred episodes at a time, so a folder page shows twenty and
+  the next hundred is read while the user is still on the page before it;
+* its clips (`/video`) are a listing of cards that is shallow: it is read page by
+  page and a page is offered only when the next one publishes something new.
 
-One strategy per listing, stated here because it is the one place both live: an
-archive is read whole, a listing is paged, and only a listing offers a next page.
-
-The archive answers for a *program*, not for the category it was asked for: a
-program keeps its older replays under another path (`Atlantide` puts them under
-`/atlantide/rivedila7/...`), so what is checked is that the archive belongs to the
-program at all. A program the query does not know publishes nothing there, and is
-listed from its page like any other.
+Either way a folder offers one page, and the page after it only when there is one. The
+archive has one extra rule: when a folder page is the last but one the store can serve,
+the block after it is asked for in the background, so the click that reaches it finds
+it already there.
 """
 
 from resources.lib.globals import G
+from resources.lib.kodi import background
 from resources.lib.kodi.dialogs import AddonError
-from resources.lib.la7play import client, payload
+from resources.lib.la7play import archive_store, client, payload
 
 # the page every program publishes its archive of replays under
 REPLICA = '/puntate'
 
-# what the archive query accepts, from the biggest page it answers to the smallest
-CAPS = (100, 50, 20)
+# how many items one folder page shows, and how many episodes one read of the site
+# adds to an archive: the site gives twenty a page, so a block is five of them
+PAGE_SIZE = 20
+BLOCK = 100
 
 
 def items(pathname, page=1):
-    """One page of a category, and whether the page after it publishes anything new."""
-    if page == 1 and pathname.endswith(REPLICA):
-        archived = replicas(pathname)
-        if archived:
-            return archived, False
+    """One page of a category, and whether the page after it has anything to show."""
+    if pathname.endswith(REPLICA):
+        return _archive(pathname, page)
     return _listing(pathname, page)
 
 
-def replicas(pathname):
-    """The archive of a program's replays, newest first, empty when it has none."""
-    program = '/' + pathname.strip('/').split('/')[0]
-    name = _name(program)
-    answer, failure = None, None
-    for cap in CAPS:
-        try:
-            answer = client.gql('filteredNodeReplicas', {'path': name, 'value': cap})
-            break
-        except client.SiteError as cause:
-            # the query refuses more than it wants to answer in one go
-            failure = cause
-    if answer is None:
-        raise AddonError(G.MODE, failure)
-    nodes = (answer.get('filteredNodeReplicas') or {}).get('nodes') or []
-    if not nodes or not payload.is_ancestor(program, payload.node_path(nodes[0])):
-        # an archive of another program is no archive of this one
-        return []
-    playable = [node for node in nodes if payload.is_playable(node)]
-    return sorted(playable, key=_air_date, reverse=True)
+def prefetch(pathname):
+    """Read the next block of an archive into the store; nothing is shown, nothing fails.
 
-
-def _name(program):
-    """The name the archive keys a program by: the site's name, not the slug.
-
-    The query takes `Otto e mezzo`, not `otto-e-mezzo`, and answers nothing for the
-    wrong spelling. A page the site does not know keeps its slug: the archive will
-    answer nothing either, and the listing is the fallback.
+    This is the background call `background.later()` asks for: Kodi hands it a plugin
+    invocation of its own, and the user is looking at another folder by the time it
+    runs. A failure is swallowed on purpose - there is nobody to tell, and the next
+    folder page will read the block itself.
     """
-    slug = program.strip('/')
     try:
-        answer = client.gql('nodePage', {'path': slug})
-    except client.SiteError:
-        return slug
-    entity = (answer.get('route') or {}).get('entity') or {}
-    return (entity.get('name') or slug).strip()
+        stored = archive_store.load(pathname)
+        if stored and not archive_store.stale(stored) and stored.get('more'):
+            archive_store.save(pathname, _read(pathname, stored))
+    except AddonError:
+        return
+
+
+def _archive(pathname, page):
+    """One page of a program's replays, read from the store a block at a time."""
+    stored = archive_store.load(pathname)
+    if not stored or archive_store.stale(stored):
+        # a stale archive is read again from the top: the newest episode is what a
+        # user sees first, and an episode published today must be there
+        stored = {'nodes': [], 'page': 1, 'more': True}
+    start = (page - 1) * PAGE_SIZE
+    while len(stored['nodes']) < start + PAGE_SIZE and stored['more']:
+        stored = archive_store.save(pathname, _read(pathname, stored))
+    nodes = stored['nodes'][start:start + PAGE_SIZE]
+    more = len(stored['nodes']) > start + PAGE_SIZE or bool(stored['more'])
+    if _about_to_run_out(stored, page):
+        # the user is on the last page the store can serve but one: read the next
+        # block now, while reading the page before it
+        background.later('prefetch', link=G.URL_PLAY_BASE + pathname)
+    return nodes, more
+
+
+def _about_to_run_out(stored, page):
+    """True when the page being shown is the last but one the store can serve."""
+    served = len(stored.get('nodes') or [])
+    return bool(stored.get('more')) and page * PAGE_SIZE < served <= (page + 1) * PAGE_SIZE
+
+
+def _read(pathname, stored):
+    """One block of an archive: the pages the store has not read yet, up to BLOCK items."""
+    nodes = list(stored.get('nodes') or [])
+    seen = set(payload.node_path(node) for node in nodes)
+    cursor, more, added = int(stored.get('page') or 1), bool(stored.get('more', True)), 0
+    while more and added < BLOCK:
+        found = _page(pathname, cursor)
+        fresh = [node for node in found if payload.node_path(node) not in seen]
+        cursor += 1
+        if not found or not fresh:
+            # the site answered with nothing new: the archive ends here, whether it
+            # says so or not
+            more = False
+            break
+        added += len(fresh)
+        nodes.extend(fresh)
+        seen.update(payload.node_path(node) for node in fresh)
+    return {'nodes': nodes, 'page': cursor, 'more': more}
 
 
 def _listing(pathname, page):
@@ -104,11 +126,3 @@ def _page(pathname, page):
         if payload.is_playable(node):
             items.append(node)
     return items
-
-
-def _air_date(node):
-    """The air date of a node as a number, zero when the site gives none."""
-    for stamp in (node.get('dataMessaInOnda'), node.get('created')):
-        if isinstance(stamp, dict) and stamp.get('timestamp'):
-            return int(stamp['timestamp'])
-    return 0

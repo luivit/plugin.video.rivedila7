@@ -29,10 +29,6 @@ What is saved:
                           the programs page as data: its carousels and the few
                           programs of each that are kept (the nine groups are all
                           real, three items each stand in for the rest)
-    gql-filteredNodeReplicas.json
-                          the archive of one program: the shape of its answers and
-                          the newest six of the hundred it gives (the whole answer
-                          is 150 kB of the same node)
     gql-nsContentHub-film.json
                           the film hub: the first eight films of its grid and the
                           eleven it recommends (three of them repeat the grid)
@@ -65,7 +61,6 @@ RSC_PUSH = 'self.__next_f.push('
 QUERIES = {
     'nodePage': 'e9d39e6838f7f588',
     'allPrograms': 'f7034d55158fc906',
-    'filteredNodeReplicas': 'e4ec45c8e38bb081',
     'nsContentHub': '0f3f2c4225230faf',
     'siteSearch': '4da1e384f8a63808',
 }
@@ -84,9 +79,6 @@ FIXTURES = [
      {'query': 'nsContentHub', 'variables': {'path': '/film'}}, {'slots': 11, 'grid': 8}),
     ('gql-nsContentHub-documentari.json', 'gql',
      {'query': 'nsContentHub', 'variables': {'path': '/documentari'}}, {'slots': 11, 'grid': 0}),
-    ('gql-filteredNodeReplicas.json', 'gql',
-     {'query': 'filteredNodeReplicas', 'variables': {'path': 'Otto e mezzo', 'value': 100}},
-     {'nodes': 6}),
     ('gql-siteSearch.json', 'gql',
      {'query': 'siteSearch', 'variables': {'q': 'manovra', 'limit': 20, 'page': 1}},
      {'hits': 6}),

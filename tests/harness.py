@@ -16,7 +16,9 @@ Usage:
 
 import datetime
 import os
+import shutil
 import sys
+import tempfile
 import types
 import unittest
 import urllib.parse
@@ -37,6 +39,11 @@ DROPPED = 0     # items Kodi would have discarded
 WINDOW = {}
 TYPED = ''
 INPUTS = []   # every keyboard dialog a call opened, as the label it asked under
+BUILTINS = []  # every builtin Kodi was asked to run: the background calls
+
+# Kodi gives the add-on a profile directory of its own: the archives the add-on keeps
+# live there, and a run must not read the one from the run before it
+PROFILE = tempfile.mkdtemp(prefix='rivedila7-profile-')
 
 # the day a smoke run asks the guide for: it lists the days that have aired, so the
 # newest day it can be asked about is yesterday
@@ -137,7 +144,7 @@ class Addon(object):
     def getAddonInfo(self, name):
         return {'id': 'plugin.video.rivedila7', 'name': 'RivediLA7',
                 'icon': os.path.join(ADDON_PATH, 'icon.png'),
-                'path': ADDON_PATH, 'profile': '/tmp/rivedila7-profile'}.get(name, '')
+                'path': ADDON_PATH, 'profile': PROFILE}.get(name, '')
 
     def getLocalizedString(self, string_id):
         return 'string %s' % string_id
@@ -203,11 +210,16 @@ class _Response(object):
 def install_stubs():
     """Make the Kodi and third-party imports of the add-on resolve to the stubs."""
     global CLOSED, DROPPED
+    del ITEMS[:]
+    del RESOLVED[:]
+    del DIALOGS[:]
+    del INPUTS[:]
+    del BUILTINS[:]
 
     xbmc = types.ModuleType('xbmc')
     xbmc.LOGDEBUG, xbmc.LOGINFO, xbmc.LOGWARNING, xbmc.LOGERROR = 0, 1, 2, 3
     xbmc.log = lambda message, level=1: LOGS.append(message)
-    xbmc.executebuiltin = lambda command, wait=False: None
+    xbmc.executebuiltin = lambda command, wait=False: BUILTINS.append(command)
     xbmc.getCondVisibility = lambda condition: False
     xbmc.getInfoLabel = lambda label: ''
     xbmc.Player = type('Player', (object,), {'isPlaying': lambda self: False,
@@ -287,6 +299,12 @@ def reset_directory():
     DROPPED = 0
 
 
+def reset_profile():
+    """Forget what the add-on kept on disk, as a fresh install of it would."""
+    shutil.rmtree(PROFILE, ignore_errors=True)
+    os.makedirs(PROFILE)
+
+
 def run_addon(query, argv_handle='1', prepare=None):
     """Call the add-on entry point and return (items, resolved, dialogs).
 
@@ -298,6 +316,7 @@ def run_addon(query, argv_handle='1', prepare=None):
     del RESOLVED[:]
     del DIALOGS[:]
     del INPUTS[:]
+    del BUILTINS[:]
 
     if ROOT not in sys.path:
         sys.path.insert(0, ROOT)

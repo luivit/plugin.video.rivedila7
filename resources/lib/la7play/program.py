@@ -8,10 +8,10 @@ Three listings live here, and each reads the site's data rather than its markup:
   page itself carries no episode list, its submenu carries the categories;
 * a category of a program gives the cards one page of it renders.
 
-A category is one of two things, and `archive.py` owns both: a program's replays
-are read whole from the archive query, newest first, while a listing of clips is
-read off its page and paged with `?page=N`. Either way a folder here is only the
-rendering: the items are rendered, the retrieval is not this module's business.
+A category is one of two things, and `archive.py` owns both: a program's replays are an
+archive kept on disk and shown twenty at a time, while a listing of clips is read off
+its page; either way a folder here is only the rendering, and both pages offer the one
+after them. The retrieval is not this module's business.
 
 What holds throughout: one Directory per folder, closed once on every path, and a
 failure named by the section that failed.
@@ -144,7 +144,6 @@ def _items(directory, pathname):
         params, item = _node(node)
         directory.add(params, item, folder=False, unique=True)
     if more:
-        # only a listing pages: an archive is one query, read whole
         directory.add({'mode': G.MODE, 'link': G.URL_PLAY_BASE + pathname,
                        'page': str(page + 1)}, items.next_page())
 

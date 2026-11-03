@@ -1,12 +1,13 @@
-"""The archive of a category: the query for replays, the page for clips.
+"""The archive of a category: replays kept on disk, clips read off their page.
 
-Two answers of the site, both captured: the archive of one program (the shape it
-gives, the newest six of the hundred), and a page of a listing. What is checked
-here is the decision between them - which source, asked with what, and what
-happens when it answers nothing or refuses.
+A program's replays are an archive the site pages twenty at a time; read on every call
+it would be thirty requests before the folder appears, so what has been read is kept and
+a block of a hundred episodes is fetched per read. A clip listing is shallow and is read
+page by page. What is checked here is that decision: which source, how much is read, when
+the store is trusted, and what is asked of Kodi so the next block is there before the
+user reaches it.
 """
 
-import base64
 import json
 import os
 import sys
@@ -18,17 +19,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
 
 from tests import harness
-from tests.site import Site, fixture
+from tests.site import Site
 
 PROGRAM = 'https://www.la7play.it/otto-e-mezzo'
 REPLAYS = PROGRAM + '/puntate'
 CLIPS = PROGRAM + '/video'
-NODE_PAGE = '/api/gql/' + 'e9d39e6838f7f588'          # nodePage
-REPLICAS = '/api/gql/' + 'e4ec45c8e38bb081'          # filteredNodeReplicas
 
-ARCHIVE = fixture('gql-filteredNodeReplicas.json')
-EMPTY = json.dumps({'data': {'filteredNodeReplicas': {'nodes': [],
-                                                      'pageInfo': {'hasNextPage': False}}}}).encode('utf-8')
+PAGE_SIZE = 20
 
 
 def listing_page(*cards):
@@ -45,18 +42,21 @@ def card(title, path):
 
 
 def refused(url):
-    """The answer the site gives to a query it will not run."""
+    """The answer the site gives to a page it will not serve."""
     return HTTPError(url, 503, 'Service Temporarily Unavailable', {}, None)
 
 
-def archive_of(*paths):
-    """An answer of the archive query that belongs to the paths given."""
-    nodes = [{'path': path, 'title': path.rsplit('/', 1)[-1],
-              'dataMessaInOnda': {'timestamp': 1000 + position},
-              'uploadVideo': {'cf_thumbnail_url': 'https://images.la7play.it/%d.jpg' % position}}
-             for position, path in enumerate(paths)]
-    return json.dumps({'data': {'filteredNodeReplicas': {'nodes': nodes,
-                                                         'pageInfo': {'hasNextPage': False}}}}).encode('utf-8')
+def replays(count, prefix='puntata'):
+    """The site's answers for `count` pages of an archive, twenty replays each."""
+    answers = {}
+    for page in range(1, count + 1):
+        cards = [card('%s %d' % (prefix, (page - 1) * PAGE_SIZE + position),
+                      '/otto-e-mezzo/puntate/%s-%d' % (prefix, (page - 1) * PAGE_SIZE + position))
+                 for position in range(PAGE_SIZE)]
+        answers[REPLAYS if page == 1 else '%s?page=%d' % (REPLAYS, page)] = listing_page(*cards)
+    # the site answers an empty page past the end of the archive, whatever the number
+    answers[REPLAYS + '?page=%d' % (count + 1)] = listing_page()
+    return answers
 
 
 class ArchiveSite(Site):
@@ -77,75 +77,101 @@ class ArchiveSite(Site):
 class ArchiveTest(unittest.TestCase):
     def setUp(self):
         harness.install_stubs()
+        harness.reset_profile()
         harness.unload_addon_modules()
         from resources.lib.globals import G
         from resources.lib.kodi.dialogs import AddonError
-        from resources.lib.la7play import archive, client
+        from resources.lib.la7play import archive, archive_store, client
         self.G, self.AddonError = G, AddonError
-        self.archive, self.client = archive, client
+        self.archive, self.store, self.client = archive, archive_store, client
         # the section that names a failure: Kodi sets the mode, a test says it itself
         self.G.init_globals(['plugin://plugin.video.rivedila7/', '1', '?mode=tutti_programmi'])
         self.serve()
 
     def serve(self, answers=None, fail=None):
-        if answers is None:
-            answers = {NODE_PAGE: fixture('gql-nodePage.json'), REPLICAS: ARCHIVE}
-        self.site = ArchiveSite(answers, fail)
+        self.site = ArchiveSite(answers if answers is not None else replays(6), fail)
         self.client.urlopen = self.site
 
-    def variables(self, name, hash_of):
-        """The variables of the one request the add-on made for a query."""
-        asked = [url for url in self.site.asked if hash_of in url]
-        self.assertEqual(len(asked), 1, asked)
-        tail = asked[0].split('/')[-1]
-        return json.loads(base64.urlsafe_b64decode(tail + '=' * (-len(tail) % 4)).decode('utf-8'))
+    def pages_asked(self):
+        return [url for url in self.site.asked if '/puntate' in url]
 
-    def test_the_archive_of_a_replica_category_is_read_whole_and_newest_first(self):
-        from resources.lib.la7play import payload
+    def test_the_first_page_of_an_archive_is_its_newest_episodes(self):
         nodes, more = self.archive.items('/otto-e-mezzo/puntate')
-        self.assertEqual(len(nodes), 6)
-        self.assertFalse(more, 'an archive is one query: it has no next page')
-        stamps = [payload.node_path(node) for node in nodes]
-        self.assertEqual(stamps[0], '/otto-e-mezzo/puntate/puntata-del-30-10-2026-398336')
-        self.assertEqual(len(set(stamps)), len(stamps), 'a replay is listed once')
+        self.assertEqual(len(nodes), PAGE_SIZE, 'one folder page, not the whole archive')
+        self.assertTrue(more, 'an archive that goes on offers the page after it')
+        self.assertEqual(nodes[0]['path'], '/otto-e-mezzo/puntate/puntata-0')
+        self.assertEqual(nodes[-1]['path'], '/otto-e-mezzo/puntate/puntata-19')
 
-    def test_the_archive_is_asked_for_by_the_programs_name_not_its_slug(self):
+    def test_the_first_page_reads_a_hundred_episodes_and_no_more(self):
         self.archive.items('/otto-e-mezzo/puntate')
-        # "otto-e-mezzo" answers nothing: the query keys a program by its site name
-        self.assertEqual(self.variables('filteredNodeReplicas', REPLICAS),
-                         {'path': 'Otto e mezzo', 'value': 100})
+        self.assertEqual(len(self.pages_asked()), 5, 'a block is a hundred episodes')
 
-    def test_an_archive_that_refuses_a_hundred_nodes_is_asked_for_fewer(self):
-        too_many = self.client.query_url('filteredNodeReplicas', {'path': 'Otto e mezzo', 'value': 100})
-        self.serve(fail={too_many: refused(too_many)})
-        nodes, _ = self.archive.items('/otto-e-mezzo/puntate')
-        self.assertEqual(len(nodes), 6)
-        self.assertIn(self.client.query_url('filteredNodeReplicas', {'path': 'Otto e mezzo', 'value': 50}),
-                      self.site.asked)
+    def test_the_page_after_the_first_is_served_without_asking_the_site_again(self):
+        self.archive.items('/otto-e-mezzo/puntate')
+        asked = len(self.pages_asked())
+        nodes, _ = self.archive.items('/otto-e-mezzo/puntate', 2)
+        self.assertEqual(nodes[0]['path'], '/otto-e-mezzo/puntate/puntata-20')
+        self.assertEqual(len(self.pages_asked()), asked, 'the store answers the second page')
 
-    def test_an_archive_that_answers_for_another_program_is_no_archive(self):
-        self.serve({NODE_PAGE: fixture('gql-nodePage.json'),
-                    REPLICAS: archive_of('/atlantide/rivedila7/atlantide-1-1-2026-1'),
-                    REPLAYS: listing_page(card('Puntata del 30/10/2026', '/otto-e-mezzo/puntate/x-1')),
-                    REPLAYS + '?page=2': listing_page()})
-        nodes, more = self.archive.items('/otto-e-mezzo/puntate')
-        self.assertEqual([n['path'] for n in nodes], ['/otto-e-mezzo/puntate/x-1'])
-        self.assertFalse(more)
+    def test_an_archive_page_past_the_store_reads_the_next_block(self):
+        self.archive.items('/otto-e-mezzo/puntate')
+        nodes, _ = self.archive.items('/otto-e-mezzo/puntate', 6)
+        self.assertEqual(nodes[0]['path'], '/otto-e-mezzo/puntate/puntata-100')
+        self.assertIn(REPLAYS + '?page=6', self.site.asked)
 
-    def test_a_listing_of_clips_never_asks_the_archive(self):
+    def test_the_archive_ends_where_the_site_stops_publishing_replays(self):
+        self.serve(replays(2))
+        nodes, more = self.archive.items('/otto-e-mezzo/puntate', 2)
+        self.assertEqual(len(nodes), PAGE_SIZE)
+        self.assertFalse(more, 'past the last page there is nothing to offer')
+
+    def test_the_last_page_but_one_asks_for_the_next_block_in_the_background(self):
+        self.archive.items('/otto-e-mezzo/puntate')
+        # a hundred episodes are cached: five pages, and the fourth is the last but one
+        self.archive.items('/otto-e-mezzo/puntate', 4)
+        self.assertEqual(len(harness.BUILTINS), 1, harness.BUILTINS)
+        self.assertTrue(harness.BUILTINS[0].startswith('RunPlugin(plugin://plugin.video.rivedila7/?'),
+                        harness.BUILTINS[0])
+        self.assertIn('mode=prefetch', harness.BUILTINS[0])
+
+    def test_the_second_to_last_page_asks_for_nothing_a_page_later(self):
+        self.archive.items('/otto-e-mezzo/puntate')
+        self.archive.items('/otto-e-mezzo/puntate', 5)
+        self.assertEqual(harness.BUILTINS, [], 'the last page is not the last but one')
+
+    def test_the_background_call_fills_the_store_and_shows_nothing(self):
+        self.archive.items('/otto-e-mezzo/puntate')
+        items, _, dialogs = harness.run_addon('?mode=prefetch&play=' + REPLAYS)
+        self.assertEqual(items, [], 'a background call lists nothing')
+        self.assertEqual(dialogs, [], 'and it never reports')
+        self.assertGreater(len(self.store.load('/otto-e-mezzo/puntate')['nodes']), 100,
+                           'the block after the first hundred is in the store')
+
+    def test_a_stale_archive_is_read_again_from_the_top(self):
+        self.archive.items('/otto-e-mezzo/puntate')
+        asked = len(self.pages_asked())
+        self.store.TTL = -1      # as an archive read a week ago would be
+        try:
+            nodes, _ = self.archive.items('/otto-e-mezzo/puntate')
+        finally:
+            self.store.TTL = 6 * 3600
+        self.assertGreater(len(self.pages_asked()), asked, 'a stale archive is read again')
+        self.assertEqual(nodes[0]['path'], '/otto-e-mezzo/puntate/puntata-0')
+
+    def test_a_listing_of_clips_never_touches_the_archive(self):
         clips = listing_page(card('La caduta del governo', '/otto-e-mezzo/video/la-caduta-1'),
                              card('Il discorso integrale', '/otto-e-mezzo/video/il-discorso-2'))
         self.serve({CLIPS: clips, CLIPS + '?page=2': listing_page()})
         nodes, _ = self.archive.items('/otto-e-mezzo/video')
         self.assertEqual([n['path'] for n in nodes],
                          ['/otto-e-mezzo/video/la-caduta-1', '/otto-e-mezzo/video/il-discorso-2'])
-        self.assertNotIn(REPLICAS, ''.join(self.site.asked))
+        self.assertEqual(self.store.load('/otto-e-mezzo/video'), {},
+                         'a clip listing is not an archive: nothing is kept')
 
     def test_an_archive_the_site_does_not_answer_is_one_dialog(self):
-        self.serve({NODE_PAGE: fixture('gql-nodePage.json')}, fail={REPLICAS: refused(REPLICAS)})
-        with self.assertRaises(self.AddonError) as failure:
+        self.serve(fail={REPLAYS: refused(REPLAYS)})
+        with self.assertRaises(self.AddonError):
             self.archive.items('/otto-e-mezzo/puntate')
-        self.assertIn('filteredNodeReplicas', str(failure.exception))
 
     def test_the_second_page_of_a_listing_is_read_from_the_page(self):
         self.serve({CLIPS: listing_page(card('Prima', '/otto-e-mezzo/video/prima-1')),

@@ -9,7 +9,7 @@ failure becomes one log line and one dialog.
 from resources.lib.globals import G
 from resources.lib.kodi import player
 from resources.lib.kodi.dialogs import AddonError, report
-from resources.lib.la7play import catalog, program, search
+from resources.lib.la7play import archive, catalog, program, search
 from resources.lib.playback import drm, streams
 
 
@@ -81,10 +81,20 @@ def cerca_la7():
         search.cerca_la7()
 
 
+def prefetch():
+    """Read the next block of an archive in the background: nothing is shown."""
+    archive.prefetch(_pathname())
+
+
 def root_menu():
     """The root menu, where a new search starts: the remembered one is dropped."""
     search.forget()
     catalog.show_root_menu()
+
+
+def _pathname():
+    """The site path of the page a parameter names."""
+    return '/' + G.PLAY[len(G.URL_PLAY_BASE):].strip('/')
 
 
 # which function serves which mode: the root menu and this table are one thing
@@ -97,6 +107,7 @@ MODES = {
     'documentari': documentari,
     'tutti_programmi': tutti_programmi,
     'cerca_la7': cerca_la7,
+    'prefetch': prefetch,
 }
 
 

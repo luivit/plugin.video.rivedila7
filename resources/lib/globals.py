@@ -53,7 +53,6 @@ class GlobalVariables(object):
     # text, is part of the URL (re-read them from the site when one stops answering)
     GQL_QUERIES = {
         'allPrograms': 'f7034d55158fc906',
-        'filteredNodeReplicas': 'e4ec45c8e38bb081',
         'nodePage': 'e9d39e6838f7f588',
         'nsContentHub': '0f3f2c4225230faf',
         'siteSearch': '4da1e384f8a63808',
@@ -82,6 +81,8 @@ class GlobalVariables(object):
         self.ADDON = xbmcaddon.Addon()
         self.LANGUAGE = self.ADDON.getLocalizedString
         self.PLUGIN_NAME = self.ADDON.getAddonInfo('name')
+        # where the add-on may keep something between calls: the archives it has read
+        self.PROFILE_PATH = self.ADDON.getAddonInfo('profile')
         # the handle identifies this invocation: Kodi hands the add-on a new one per call
         self.PLUGIN_HANDLE = int(argv[1])
         self.PARAMS = parameters_string_to_dict(argv[2])

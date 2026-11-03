@@ -79,7 +79,7 @@ class ClientTest(unittest.TestCase):
                          b'{"path":"/programmi"}')
 
     def test_the_variables_are_sorted_and_carry_no_padding(self):
-        encoded = self.client.query_url('filteredNodeReplicas', {'value': 20, 'path': '/film'}).rsplit('/', 1)[-1]
+        encoded = self.client.query_url('nodePage', {'value': 20, 'path': '/film'}).rsplit('/', 1)[-1]
         self.assertNotIn('=', encoded)
         self.assertEqual(base64.urlsafe_b64decode(encoded + '=' * (-len(encoded) % 4)),
                          b'{"path":"/film","value":20}')

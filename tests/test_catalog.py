@@ -95,8 +95,10 @@ class CatalogTest(unittest.TestCase):
             self.assertTrue(item['folder'])
 
     def test_every_entry_of_the_menu_has_a_mode_behind_it(self):
-        self.assertEqual(sorted(mode for mode, _label, _art, _folder, _live in self.catalog.ROOT_MENU),
-                         sorted(self.plugin.MODES))
+        # the menu is a subset: a mode can also be a call the add-on makes to itself,
+        # like the one that fills an archive while the user reads
+        self.assertEqual([mode for mode, _label, _art, _folder, _live in self.catalog.ROOT_MENU
+                          if mode not in self.plugin.MODES], [])
 
     def test_the_programs_page_lists_the_groups_and_the_flat_list(self):
         self.entering()
