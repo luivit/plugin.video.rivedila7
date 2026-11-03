@@ -1,0 +1,30 @@
+name: smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      walk:
+        description: 'One section to walk instead of every section (e.g. "film --depth 2")'
+        required: false
+        default: ''
+  schedule:
+    - cron: '0 6 * * 1'  # Mondays 06:00 UTC
+
+jobs:
+  smoke:
+    # The live site is not a merge gate: this runs on demand and on a schedule.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Walk la7play.it
+        env:
+          WALK: ${{ inputs.walk }}
+        run: |
+          if [ -n "$WALK" ]; then
+            make walk ARGS="$WALK"
+          else
+            make smoke
+          fi

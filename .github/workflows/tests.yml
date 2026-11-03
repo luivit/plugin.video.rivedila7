@@ -4,8 +4,6 @@ on:
   push:
   pull_request:
   workflow_dispatch:
-  schedule:
-    - cron: '0 6 * * 1'
 
 jobs:
   offline:
@@ -17,15 +15,3 @@ jobs:
           python-version: '3.11'
       - name: Offline tests
         run: make test
-
-  smoke:
-    # The live site is not a merge gate: this runs on demand and on a schedule.
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-      - name: Walk every section on la7play.it
-        run: make smoke

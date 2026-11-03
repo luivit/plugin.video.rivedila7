@@ -77,5 +77,7 @@ add-on offline), the offline suite, and the real site answers the suite reads. T
 carries the add-on only: `tests/`, `design/` and `.github/` are not in it.
 
 GitHub Actions runs `make test` on every push and pull request
-(`.github/workflows/tests.yml`), and `make smoke` on a weekly schedule or on demand -
-the live site is not a merge gate.
+(`.github/workflows/tests.yml`), and `make smoke` on a weekly schedule or on demand
+(`.github/workflows/smoke.yml`, *Run workflow* in the Actions tab, or
+`gh workflow run smoke.yml`) - the live site is not a merge gate. A dispatch can walk a
+single section instead: *Run workflow* takes `film --depth 2` and runs `make walk` with it.
