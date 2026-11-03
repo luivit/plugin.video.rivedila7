@@ -59,3 +59,15 @@ msgstr "Documentari"
 msgctxt "#32015"
 msgid "All programs (A-Z)"
 msgstr "Tutti i programmi (A-Z)"
+
+msgctxt "#32016"
+msgid "Podcasts"
+msgstr "Podcast"
+
+msgctxt "#32017"
+msgid "News"
+msgstr "Notizie"
+
+msgctxt "#32018"
+msgid "Weather"
+msgstr "Meteo"

@@ -21,10 +21,11 @@ from tests import harness
 from tests.site import Site, fixture
 
 MENU = ['[B]string 32002[/B]', '[B]string 32009[/B]', '[B]string 32001[/B]', '[B]string 32004[/B]',
-        '[B]string 32013[/B]', '[B]string 32014[/B]', '[B]string 32006[/B]', '[B]string 32012[/B]']
+        '[B]string 32013[/B]', '[B]string 32014[/B]', '[B]string 32006[/B]', '[B]string 32016[/B]',
+        '[B]string 32012[/B]']
 
 MODES = ['diretta_la7', 'diretta_la7cinema', 'rivedi_la7', 'rivedi_la7cinema',
-         'film', 'documentari', 'tutti_programmi', 'cerca_la7']
+         'film', 'documentari', 'tutti_programmi', 'podcast', 'cerca_la7']
 
 GROUPS = ['Prima serata', 'La giornata', 'La7Play Original', 'Intrattenimento culturale',
           'Le nostre inchieste', 'Viaggia con noi', 'Lifestyle', 'Eventi', 'Teche']
@@ -77,7 +78,7 @@ class CatalogTest(unittest.TestCase):
     def params(item):
         return dict(urllib.parse.parse_qsl(urllib.parse.urlparse(item['url']).query))
 
-    def test_the_root_menu_is_the_eight_sections_of_the_contract(self):
+    def test_the_root_menu_is_the_nine_sections_of_the_contract(self):
         self.entering('')
         self.catalog.show_root_menu()
         self.assertEqual([item['label'] for item in harness.ITEMS], MENU)
@@ -211,7 +212,7 @@ class CatalogTest(unittest.TestCase):
     def test_the_menu_opens_without_asking_the_site(self):
         self.serve(error=URLError('no route'))
         items, _, dialogs = self.call('?mode=')
-        self.assertEqual(len(items), 8)
+        self.assertEqual(len(items), 9)
         self.assertEqual(dialogs, [])
         self.assertEqual(self.site.asked, [])
 

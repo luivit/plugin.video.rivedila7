@@ -9,7 +9,7 @@ failure becomes one log line and one dialog.
 from resources.lib.globals import G
 from resources.lib.kodi import player
 from resources.lib.kodi.dialogs import AddonError, report
-from resources.lib.la7play import archive, catalog, program, search
+from resources.lib.la7play import archive, catalog, podcasts, program, search
 from resources.lib.playback import drm, streams
 
 
@@ -81,6 +81,16 @@ def cerca_la7():
         search.cerca_la7()
 
 
+def podcast():
+    """The podcasts the site lists, the episodes of one, or one episode."""
+    if G.PLAY:
+        podcasts.play(G.PLAY)
+    elif G.LINK:
+        podcasts.episodi()
+    else:
+        podcasts.serie()
+
+
 def prefetch():
     """Read the next block of an archive in the background: nothing is shown."""
     archive.prefetch(_pathname())
@@ -107,6 +117,7 @@ MODES = {
     'documentari': documentari,
     'tutti_programmi': tutti_programmi,
     'cerca_la7': cerca_la7,
+    'podcast': podcast,
     'prefetch': prefetch,
 }
 

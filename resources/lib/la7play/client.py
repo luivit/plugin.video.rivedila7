@@ -43,7 +43,23 @@ def fetch_html(url):
     """The HTML of one page, decoded."""
     request = Request(url, headers=USER_AGENT)
     try:
-        return urlopen(request, timeout=TIMEOUT).read().decode('utf-8', 'replace')
+        html = urlopen(request, timeout=TIMEOUT).read().decode('utf-8', 'replace')
+    except (HTTPError, URLError, OSError, ValueError) as cause:
+        raise SiteError(url, cause)
+    if not html:
+        raise SiteError(url, 'empty answer')
+    return html
+
+
+def stream(url):
+    """An answer too big to hold: the caller reads it as it arrives.
+
+    A podcast feed can carry thousands of episodes and megabytes of text, and only the
+    page being shown is wanted, so what comes back here is the open answer itself - the
+    caller parses it as it streams and stops when it has what it asked for.
+    """
+    try:
+        return urlopen(Request(url, headers=USER_AGENT), timeout=TIMEOUT)
     except (HTTPError, URLError, OSError, ValueError) as cause:
         raise SiteError(url, cause)
 

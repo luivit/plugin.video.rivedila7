@@ -59,3 +59,15 @@ msgstr ""
 msgctxt "#32015"
 msgid "All programs (A-Z)"
 msgstr ""
+
+msgctxt "#32016"
+msgid "Podcasts"
+msgstr ""
+
+msgctxt "#32017"
+msgid "News"
+msgstr ""
+
+msgctxt "#32018"
+msgid "Weather"
+msgstr ""

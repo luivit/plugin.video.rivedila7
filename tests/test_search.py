@@ -144,7 +144,7 @@ class SearchTest(unittest.TestCase):
     def test_the_menu_forgets_the_query_so_the_next_search_asks_again(self):
         self.call(typed='manovra')
         menu, _, _ = harness.run_addon('?mode=')
-        self.assertEqual(len(menu), 8)
+        self.assertEqual(len(menu), 9)
         items, _, _ = self.call(typed='')
         self.assertEqual(items, [])
         self.assertEqual(harness.INPUTS, ['string 32012'], 'a search from the menu asks again')

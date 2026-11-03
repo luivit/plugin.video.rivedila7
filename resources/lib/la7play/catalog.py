@@ -36,6 +36,7 @@ ROOT_MENU = (
     ('film', 32013, 'film.jpg', True, False),
     ('documentari', 32014, 'filmfiction.jpg', True, False),
     ('tutti_programmi', 32006, 'programmi.jpg', True, False),
+    ('podcast', 32016, 'podcast.jpg', True, False),
     ('cerca_la7', 32012, 'cerca.png', True, False),
 )
 

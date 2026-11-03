@@ -17,7 +17,7 @@ class Answer(object):
     def __init__(self, body):
         self.body = body
 
-    def read(self):
+    def read(self, size=-1):
         return self.body
 
 
