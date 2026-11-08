@@ -49,8 +49,8 @@ msgid "Programs"
 msgstr "Programmi"
 
 msgctxt "#32008"
-msgid "Personalities"
-msgstr "Personaggi"
+msgid "Podcast"
+msgstr "Podcast"
 
 msgctxt "#32010"
 msgid "LA7 Prime"

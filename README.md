@@ -1,5 +1,5 @@
 # LA7-LA7Cinema Kodi plugin
-Live Streaming, Replay the last week, LA7 Cinema, On-Demand programs, News & Weather, Search function (italian language)
+Live Streaming, Replay the last week, LA7 Cinema, On-Demand programs, News & Weather, Podcast, Search function (italian language)
 
 ### Install tips
 - You can install this plugin via the official Kodi repository
@@ -7,6 +7,14 @@ Live Streaming, Replay the last week, LA7 Cinema, On-Demand programs, News & Wea
 "sudo apt install kodi-inputstream-adaptive"
 
 ### Changelog
+7.3.0 (2026-11-03)
+- Added Podcast section
+- Removed Personalities section, no longer available on the LA7 site
+
+7.2.0 (2026-10-29)
+- Migration to the new la7play.it site (Live, Replay, Programs, Movies, News & Weather)
+- Search function adapted to la7play.it
+
 7.1.0 (2026-10-08)
 - Added Search function
 - Fix Personalities biography

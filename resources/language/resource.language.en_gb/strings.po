@@ -49,7 +49,7 @@ msgid "Programs"
 msgstr ""
 
 msgctxt "#32008"
-msgid "Personalities"
+msgid "Podcast"
 msgstr ""
 
 msgctxt "#32010"
